@@ -25,7 +25,6 @@ scratch/
 
 # ── Storage: exclude bulk binary files ──────────────────────────────────────
 # Encrypted document files (101 MB, up to 27 MB per file — too large for git)
-storage/encrypted/
 
 # Decrypted session copies (128 MB, generated on demand)
 storage/decrypted/
