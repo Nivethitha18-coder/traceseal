@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACESEAL — Authorized Personnel Dashboard</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TRACESEAL">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <span>TRACESEAL</span>
+    </div>
+    <div class="nav-links">
+      <a href="/">Overview</a>
+      <a href="/admin">Admin Dashboard</a>
+      <a href="/recipient" class="active">Authorized Personnel Dashboard</a>
+      <a href="/investigator">Leak Investigation</a>
+      <a href="/ledger-view">Ledger Integrity</a>
+      <div id="nav-user-info"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff;" id="employee-welcome-title">
+          Authorised Personnel Dashboard
+        </h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="member-welcome-subtitle">
+          Authorized Confidential Document Portal
+        </p>
+      </div>
+      <div>
+        <span class="role-pill role-recipient" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;" id="member-badge">
+          AUTHORISED PERSONNEL
+        </span>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- PRIMARY FEATURE: WARNINGS RECEIVED (PROMINENT TOP SECTION)     -->
+    <!-- ============================================================== -->
+    <div class="card" id="primary-warnings-received-section" style="margin-bottom: 2.25rem; border: 1px solid rgba(245, 158, 11, 0.45); background: linear-gradient(180deg, rgba(245, 158, 11, 0.07) 0%, rgba(15, 23, 42, 0.85) 100%); box-shadow: 0 4px 24px rgba(0,0,0,0.35);">
+      
+      <!-- Prominent Counter Banner -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid rgba(245, 158, 11, 0.25); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(245, 158, 11, 0.16); border: 1px solid rgba(245, 158, 11, 0.45); display: flex; align-items: center; justify-content: center; color: #fbbf24; font-size: 1.5rem;">
+            ⚠️
+          </div>
+          <div>
+            <div style="font-size: 0.8rem; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.08em;">
+              Security Notices & Communications
+            </div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #fff; letter-spacing: 0.02em;">
+              WARNINGS RECEIVED: <span id="stat-warnings-received-count" class="mono" style="color: #fbbf24; background: rgba(245, 158, 11, 0.22); padding: 0.15rem 0.75rem; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.45);">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-view-all-received-warnings" onclick="toggleViewAllReceivedWarnings()">
+            📋 View All Warnings
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="loadRecipientNotices()" title="Refresh Warnings from Database">
+            🔄 Refresh Warnings
+          </button>
+        </div>
+      </div>
+
+      <!-- Section Title & Description -->
+      <div style="margin-bottom: 1rem;">
+        <h2 style="font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 0.25rem;">
+          ⚠ WARNINGS RECEIVED
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
+          Security warnings received from investigators regarding documents, cases, or security incidents associated with your account.
+        </p>
+      </div>
+
+      <!-- Warnings Received Table -->
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Warning ID</th>
+              <th>Issued By</th>
+              <th>Role</th>
+              <th>Reason</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recipient-notices-table-body">
+            <tr><td colspan="7" style="text-align: center; padding: 1.5rem;">Loading received warnings...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="notices-pagination" style="margin-top: 1rem;"></div>
+    </div>
+
+    <!-- Active Decryption Feedback Banner -->
+    <div id="decryption-result-card" class="card" style="display: none; border-color: var(--status-pass); background: rgba(16, 185, 129, 0.05); margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span class="badge badge-pass" style="font-size: 0.85rem; padding: 0.3rem 0.8rem;">Decryption Successful ✓</span>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0.5rem;">
+            Unique Forensic Fingerprint Embedded
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem;">
+            A session-specific watermark has been imperceptibly woven into this document. The provenance event has been signed with NIST ML-DSA and committed to the offline ledger.
+          </p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <a id="btn-download-fingerprinted" href="#" class="btn btn-success" download style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            📥 Download My Fingerprinted Copy
+          </a>
+        </div>
+      </div>
+
+      <!-- Structured Cards: Decryption Session, Forensic Watermark, Original Document -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
+        <!-- Card 1: Decryption Session -->
+        <div style="background: #0b1120; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--accent-cyan); letter-spacing: 0.05em;">Decryption Session</span>
+            <span class="badge badge-pass" id="res-session-status">SUCCESS</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;">
+            <div>
+              <div class="stat-label">Session ID</div>
+              <div class="mono" id="res-session-id" style="font-weight: 700; color: #fff; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Timestamp</div>
+              <div id="res-session-time" style="color: #cbd5e1; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Recipient</div>
+              <div id="res-session-recipient" style="color: #cbd5e1; font-weight: 600; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Document</div>
+              <div id="res-session-doc" style="color: #cbd5e1; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Ledger Block Index</div>
+              <div class="mono" id="res-block-index" style="color: #38bdf8; font-weight: 600; margin-top: 0.15rem;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Forensic Fingerprint / Watermark -->
+        <div style="background: #0b1120; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #38bdf8; letter-spacing: 0.05em;">Forensic Fingerprint / Watermark</span>
+            <span class="badge badge-pass" id="res-watermark-status">EMBEDDED</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;">
+            <div>
+              <div class="stat-label">Fingerprint ID</div>
+              <div class="mono" id="res-watermark-id" style="font-weight: 700; color: var(--accent-cyan); margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Watermark / Hash Identifier</div>
+              <div class="mono" id="res-watermark-hash" style="color: #94a3b8; font-size: 0.78rem; word-break: break-all; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Recipient</div>
+              <div id="res-watermark-recipient" style="color: #cbd5e1; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Document ID</div>
+              <div class="mono" id="res-watermark-doc-id" style="color: #cbd5e1; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Created Timestamp</div>
+              <div id="res-watermark-time" style="color: #cbd5e1; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Method</div>
+              <div id="res-watermark-method" style="color: #a7f3d0; font-weight: 600; font-size: 0.8rem; margin-top: 0.15rem;">Imperceptible Multi-Layer Steganography</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Original Document -->
+        <div style="background: #0b1120; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #fbbf24; letter-spacing: 0.05em;">Original Document</span>
+            <span class="badge badge-info" id="res-doc-version">v1.0</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;">
+            <div>
+              <div class="stat-label">Document ID</div>
+              <div class="mono" id="res-doc-id" style="font-weight: 700; color: #fff; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Filename</div>
+              <div id="res-doc-name" style="font-weight: 600; color: #f1f5f9; margin-top: 0.15rem; word-break: break-all;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">SHA-256 (Original)</div>
+              <div class="mono" id="res-doc-hash" style="color: #38bdf8; font-size: 0.78rem; word-break: break-all; margin-top: 0.15rem;">-</div>
+            </div>
+            <div>
+              <div class="stat-label">Cryptographic Status</div>
+              <div style="color: var(--status-pass); font-weight: 600; margin-top: 0.15rem;">VERIFIED INTEGRITY ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Documents Table -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-title">
+        <span>My Documents</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadAuthorizedDocs()">Refresh</button>
+      </div>
+      <p class="card-desc">
+        Confidential encrypted documents assigned to your account with cryptographic watermarking, secure in-browser reader, and provenance tracking.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Document Name</th>
+              <th>Document ID</th>
+              <th>Status</th>
+              <th>Receipt / Activity</th>
+              <th>Digital Signature (DSA)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="authorized-table-body">
+            <tr><td colspan="6" style="text-align: center;">Loading authorized documents...</td></tr>
+
+          </tbody>
+        </table>
+      </div>
+      <div id="authorized-docs-pagination"></div>
+    </div>
+
+    <!-- Member Decryption History Table -->
+    <div class="card">
+      <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <span>My Decryption Provenance History</span>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openClearHistoryModal()" style="border-color: rgba(239, 68, 68, 0.4); color: #f87171;">
+          🗑️ Clear History
+        </button>
+      </div>
+      <p class="card-desc">
+        Complete history of your decryption sessions, issued watermark identifiers, and ledger blocks.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Session ID</th>
+              <th>Document ID</th>
+              <th>Watermark ID</th>
+              <th>Document Hash</th>
+              <th>Completed At</th>
+              <th>Download</th>
+            </tr>
+          </thead>
+          <tbody id="history-table-body">
+            <tr><td colspan="6" style="text-align: center;">Loading history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="history-pagination"></div>
+    </div>
+  </main>
+
+  <!-- Clear History Confirmation Modal (Authorized Personnel Only) -->
+  <div id="clear-history-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="max-width: 480px; width: 100%; border: 1px solid rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0,0,0,0.7);">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem;">
+        Clear Personal History?
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.5rem;">
+        Your visible activity history will be cleared from your account view. Security, forensic and audit records will remain securely preserved.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeClearHistoryModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" style="background: #dc2626; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer;" onclick="confirmClearHistory()">Confirm Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recipient View Notice Modal -->
+  <div id="recipient-notice-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="max-width: 640px; width: 100%; border: 1px solid rgba(245, 158, 11, 0.6); box-shadow: 0 20px 40px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #fbbf24; margin: 0;">
+            WARNING DETAILS
+          </h3>
+          <div class="mono" style="font-size: 0.8rem; color: var(--accent-cyan); margin-top: 0.2rem;" id="modal-recipient-notice-id">NOT-ID</div>
+        </div>
+        <button type="button" onclick="closeRecipientNoticeModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem; margin-bottom: 1.25rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.85rem;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Issued By:</span>
+            <div id="modal-notice-issuer-display" style="color: var(--accent-cyan); font-weight: 700;">-</div>
+            <div style="font-size: 0.72rem; color: #94a3b8;" id="modal-notice-issuer-role-display">Role: Investigator</div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Issued To:</span>
+            <div id="modal-notice-rec-name" style="color: #fff; font-weight: 700;">-</div>
+            <div style="font-size: 0.72rem; color: #94a3b8;" id="modal-notice-recipient-role-display">Role: Authorised Personnel</div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Reason / Subject:</span>
+            <div id="modal-notice-subject" style="color: #fbbf24; font-weight: 600;">-</div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Status:</span>
+            <div><span id="modal-notice-rec-status" class="badge badge-pass">SENT</span></div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Issued On:</span>
+            <div id="modal-notice-rec-date" style="color: #e2e8f0;">-</div>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.75rem;">Case / Document Reference:</span>
+            <div id="modal-notice-rec-doc" style="color: #cbd5e1; font-weight: 500;">-</div>
+            <div class="mono" style="font-size: 0.72rem; color: #38bdf8;" id="modal-notice-rec-case">-</div>
+          </div>
+        </div>
+
+        <div style="font-weight: 700; color: #f8fafc; font-size: 0.82rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+          Warning Message:
+        </div>
+        <div id="modal-notice-rec-body" style="background: rgba(0,0,0,0.3); padding: 0.95rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.86rem; color: #cbd5e1; line-height: 1.6; white-space: pre-wrap;">
+        </div>
+
+        <!-- Recipient Reply / Formal Response Section -->
+        <div id="modal-notice-reply-section" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.85rem;">
+          <div id="modal-notice-replied-box" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 6px; padding: 0.85rem;">
+            <div style="font-weight: 700; color: #34d399; font-size: 0.82rem; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.35rem;">
+              <span>✓</span> Formal Response Submitted
+            </div>
+            <div id="modal-notice-replied-text" style="font-size: 0.85rem; color: #e2e8f0; line-height: 1.5; white-space: pre-wrap;"></div>
+            <div id="modal-notice-replied-meta" style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.4rem;"></div>
+          </div>
+
+          <div id="modal-notice-reply-form" style="display: none;">
+            <div style="font-weight: 700; color: #fbbf24; font-size: 0.82rem; margin-bottom: 0.35rem;">
+              Submit Formal Explanation / Response:
+            </div>
+            <textarea id="notice-reply-input" class="form-input" rows="3" placeholder="Provide any requested information, clarification, or your statement regarding this document copy..." style="font-size: 0.85rem; width: 100%; box-sizing: border-box; resize: vertical; margin-bottom: 0.5rem;"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-warning btn-sm" id="btn-submit-reply" onclick="submitNoticeReply()" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #fbbf24; font-weight: 600;">
+                ✉️ Submit Response
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" onclick="closeRecipientNoticeModal()">Close</button>
+        <button type="button" class="btn btn-primary" id="btn-ack-notice" onclick="acknowledgeActiveNotice()" style="background: #10b981; border-color: #10b981;">
+          ✓ Acknowledge Notice
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-download-notice-pdf" onclick="downloadActiveNoticePdf()" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.5);">
+          📥 Download PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secure Document Reader Modal (In-Browser Reader) -->
+  <div id="doc-reader-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="max-width: 720px; width: 100%; border: 1px solid var(--accent-cyan); box-shadow: 0 20px 45px rgba(0,0,0,0.8); max-height: 92vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0;" id="reader-doc-title">Document Reader</h3>
+            <span id="reader-status-badge" class="badge badge-info">READ</span>
+          </div>
+          <div class="mono" style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 0.2rem;" id="reader-doc-id">DOC-ID</div>
+        </div>
+        <button type="button" onclick="closeDocumentReader()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Watermark / Clearance Banner -->
+      <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 6px; padding: 0.5rem 0.75rem; font-size: 0.78rem; color: #fca5a5; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+        <div>🔒 <b>RESTRICTED CLEARANCE:</b> Confidential Document View Session</div>
+        <div class="mono" style="font-size: 0.72rem;" id="reader-session-user">PERSONNEL: -</div>
+      </div>
+
+      <!-- Secure Reading Pane -->
+      <div style="flex: 1; overflow-y: auto; background: rgba(10, 15, 30, 0.9); border: 1px solid var(--border-color); border-radius: 6px; padding: 1.25rem; margin-bottom: 1rem; position: relative;">
+        <!-- Steganographic Watermark Overlay Hint -->
+        <div style="position: absolute; inset: 0; pointer-events: none; opacity: 0.04; font-size: 2.2rem; font-weight: 900; color: #fff; transform: rotate(-25deg); display: flex; align-items: center; justify-content: center; text-transform: uppercase;" id="reader-watermark-overlay">
+          CONFIDENTIAL • TRACESEAL
+        </div>
+
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 0.6rem; margin-bottom: 0.85rem; font-size: 0.8rem; color: var(--text-dim);">
+          <div>File Size: <span id="reader-file-size" style="color: #fff;">-</span></div>
+          <div>Encryption: <span style="color: var(--accent-cyan);" class="mono">ML-KEM-768 + AES-256-GCM</span></div>
+          <div>Read Registered: <span id="reader-read-time" style="color: #34d399;">Just now</span></div>
+        </div>
+
+        <div style="line-height: 1.7; font-size: 0.9rem; color: #e2e8f0; font-family: inherit;">
+          <p style="margin-top: 0;"><b>Document Security Notice:</b></p>
+          <p>This confidential document has been decrypted into your isolated session under active authorization policies. Access to this document is tracked under the TRACESEAL cryptographic provenance framework.</p>
+          <div style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-cyan); padding: 0.75rem 1rem; border-radius: 0 4px 4px 0; margin: 1rem 0; font-size: 0.85rem; color: #94a3b8;">
+            <b>Evidentiary Provenance Record:</b><br>
+            Opening and reading this file has been registered with your authenticated account credentials. If a copy is downloaded, an imperceptible forensic fingerprint bound to your identity and digital signature will be embedded.
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-dim);">
+            To obtain an offline cryptographically signed copy with your unique forensic watermark embedded, select <b>Decrypt & Download</b> below.
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openDocumentDetailsFromReader()">
+          ℹ️ View Details
+        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeDocumentReader()">Close Reader</button>
+          <button type="button" class="btn btn-primary" id="btn-reader-download" onclick="downloadFromReader()">
+            🔓 Decrypt & Download
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Details Modal -->
+  <div id="doc-details-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="max-width: 620px; width: 100%; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div>
+          <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0;">
+            Document Details & Security Metadata
+          </h3>
+          <div class="mono" style="font-size: 0.75rem; color: var(--accent-cyan); margin-top: 0.2rem;" id="modal-details-doc-id">DOC-ID</div>
+        </div>
+        <button type="button" onclick="closeDocumentDetails()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem; margin-bottom: 1.25rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem; margin-bottom: 1rem;">
+          <div><span style="color: var(--text-muted); font-size: 0.75rem;">Document Name:</span> <div id="modal-details-name" style="color: #fff; font-weight: 600;">-</div></div>
+          <div><span style="color: var(--text-muted); font-size: 0.75rem;">Document ID:</span> <div class="mono" style="color: var(--accent-cyan);" id="modal-details-id-val">-</div></div>
+          <div><span style="color: var(--text-muted); font-size: 0.75rem;">File Size:</span> <div id="modal-details-size">-</div></div>
+          <div><span style="color: var(--text-muted); font-size: 0.75rem;">Interaction Status:</span> <div><span id="modal-details-status" class="badge badge-pass">RECEIVED</span></div></div>
+          <div><span style="color: var(--text-muted); font-size: 0.75rem;">Authorized Date:</span> <div id="modal-details-granted">-</div></div>
+          <div><span style="color: var(--text-muted); font-size: 0.75rem;">Last Activity:</span> <div id="modal-details-activity">-</div></div>
+        </div>
+
+        <div style="font-weight: 700; color: #f8fafc; font-size: 0.82rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+          Cryptographic Specifications
+        </div>
+        <div style="background: rgba(0,0,0,0.3); padding: 0.85rem; border-radius: 6px; font-size: 0.82rem; line-height: 1.6; color: #cbd5e1;">
+          <div><b>Key Encapsulation:</b> NIST FIPS 203 Post-Quantum ML-KEM-768 (Kyber)</div>
+          <div><b>Data Encryption:</b> AES-256-GCM with Associated Data Authentication</div>
+          <div><b>Digital Signatures:</b> NIST FIPS 204 Post-Quantum ML-DSA-44 (Dilithium)</div>
+          <div><b>Provenance:</b> Offline Tamper-Evident SHA-256 Hash-Chained Ledger</div>
+          <div><b>Watermarking:</b> Multi-Bit Spatial Frequency Steganographic Fingerprinting</div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" onclick="closeDocumentDetails()">Close</button>
+        <button type="button" class="btn btn-secondary" id="btn-details-read" onclick="readFromDetails()">
+          📖 Read / Open
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-details-download" onclick="downloadFromDetails()">
+          🔓 Decrypt & Download
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>TRACESEAL — Cryptographically Verifiable Document Leak Attribution</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+  <script>
+    let cachedRecipientNotices = [];
+    let activeViewingNotice = null;
+    let cachedAuthDocs = [];
+    let pageAuthDocs = 1;
+    let cachedMemberHistory = [];
+    let pageHistory = 1;
+    let pageNotices = 1;
+
+    function changeAuthDocsPage(p) {
+      pageAuthDocs = p;
+      renderAuthorizedDocs();
+    }
+
+    function changeHistoryPage(p) {
+      pageHistory = p;
+      renderMemberHistory();
+    }
+
+    function changeNoticesPage(p) {
+      pageNotices = p;
+      renderRecipientNotices();
+    }
+
+    async function initMemberPage() {
+      const user = getCurrentUser();
+      const normRole = (user && user.role) ? user.role.toUpperCase() : "";
+      const isRecipient = ["RECIPIENT", "EMPLOYEE", "AUTHORISED_PERSONNEL", "AUTHORIZED_PERSONNEL", "MEMBER"].includes(normRole);
+
+      if (!user || !isRecipient) {
+        showToast("Authorised Personnel credentials required. Redirecting to your dashboard...", "error");
+        setTimeout(() => {
+          if (!user) window.location.href = "/login?role=employee";
+          else if (user.role === "ADMIN") window.location.href = "/admin";
+          else window.location.href = "/investigator";
+        }, 500);
+        return;
+      }
+
+      document.getElementById("employee-welcome-title").innerText = `Authorised Personnel Dashboard — ${user.display_name || user.username}`;
+      document.getElementById("member-badge").innerText = "AUTHORISED PERSONNEL";
+      document.getElementById("member-welcome-subtitle").innerText = `Account: @${user.username} — Authorized Confidential Document Portal`;
+
+      await Promise.allSettled([
+        loadAuthorizedDocs(),
+        loadMemberHistory(),
+        loadRecipientNotices(),
+        loadLatestDecryptionSession()
+      ]);
+    }
+
+    async function loadAuthorizedDocs() {
+      try {
+        const docs = await apiCall("/api/recipient/documents");
+        cachedAuthDocs = docs || [];
+        renderAuthorizedDocs();
+      } catch (e) {
+        console.error("loadAuthorizedDocs error:", e);
+      }
+    }
+
+    function renderAuthorizedDocs() {
+      const tbody = document.getElementById("authorized-table-body");
+      if (!tbody) return;
+
+      if (!cachedAuthDocs || cachedAuthDocs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No documents currently authorized for your account.<br><span style="font-size: 0.8rem; color: var(--text-dim);">An Administrator must grant you permission to view confidential documents.</span></td></tr>`;
+        renderTablePagination("authorized-docs-pagination", 1, 0, "changeAuthDocsPage", 8);
+        return;
+      }
+
+      const paged = cachedAuthDocs.slice((pageAuthDocs - 1) * 8, pageAuthDocs * 8);
+      tbody.innerHTML = paged.map(d => {
+        const isDownloaded = (d.interaction_status === "DOWNLOADED" || d.downloaded_at || d.completed_session_id);
+        const isRead = (d.interaction_status === "READ" || d.read_at);
+        
+        let statusBadge = `<span class="badge badge-warn">RECEIVED</span>`;
+        if (isDownloaded) {
+          statusBadge = `<span class="badge badge-pass">DOWNLOADED ✓</span>`;
+        } else if (isRead) {
+          statusBadge = `<span class="badge badge-info">READ</span>`;
+        }
+
+        let activityText = "-";
+        if (isDownloaded && d.downloaded_at) {
+          activityText = `<span style="font-size: 0.78rem; color: #10b981;">Downloaded: ${new Date(d.downloaded_at).toLocaleString()}</span>`;
+        } else if (isRead && d.read_at) {
+          activityText = `<span style="font-size: 0.78rem; color: #38bdf8;">Read: ${new Date(d.read_at).toLocaleString()}</span>`;
+        } else if (d.granted_at) {
+          activityText = `<span style="font-size: 0.78rem; color: var(--text-dim);">Received: ${new Date(d.granted_at).toLocaleString()}</span>`;
+        } else if (d.created_at) {
+          activityText = `<span style="font-size: 0.78rem; color: var(--text-dim);">Received: ${new Date(d.created_at).toLocaleString()}</span>`;
+        }
+
+        let sigBadge = `<span class="badge badge-secondary" style="color: var(--text-muted);">UNSIGNED</span>`;
+        if (d.is_signed || d.signature_id) {
+          sigBadge = `<span class="badge badge-pass" style="font-weight: 700; cursor: pointer;" onclick="openSignatureModal('${d.signature_id}')" title="Click to view verified DSA signature">SIGNED (DSA) ✓</span>`;
+        }
+
+        return `
+          <tr>
+            <td><b>${d.original_filename}</b></td>
+            <td><span class="mono" style="font-size: 0.8rem; color: var(--accent-cyan); font-weight: 700;">${d.document_id}</span></td>
+            <td>${statusBadge}</td>
+            <td>${activityText}</td>
+            <td>${sigBadge}</td>
+            <td style="white-space: nowrap;">
+              <div style="display: inline-flex; gap: 0.4rem; align-items: center;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openDocumentReader('${d.document_id}')" title="Open and read in secure browser reader">
+                  📖 Read
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="executeDecryptionAndDownload('${d.document_id}', '${d.original_filename.replace(/'/g, "\\'")}')" title="Decrypt and download fingerprinted copy">
+                  🔓 Decrypt & Download
+                </button>
+                ${(d.is_signed || d.signature_id) ? `
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="openSignatureModal('${d.signature_id}')" title="View cryptographic DSA signature details">
+                    📜 Signature
+                  </button>
+                ` : `
+                  <button type="button" class="btn btn-warning btn-sm" onclick="signDocumentAction('${d.document_id}', '${d.original_filename.replace(/'/g, "\\'")}')" title="Sign & Acknowledge with DSA digital signature">
+                    ✍️ Sign
+                  </button>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+
+      renderTablePagination("authorized-docs-pagination", pageAuthDocs, cachedAuthDocs.length, "changeAuthDocsPage", 8);
+    }
+
+    let activeModalDocId = null;
+
+    async function openDocumentReader(docId) {
+      if (!docId) return;
+      activeModalDocId = docId;
+      const user = getCurrentUser() || {};
+      const d = cachedAuthDocs.find(item => item.document_id === docId) || { document_id: docId, original_filename: "Document" };
+
+      // Record Read event in backend
+      try {
+        const readRes = await apiCall(`/api/recipient/documents/${docId}/read`, "POST");
+        if (d && d.interaction_status !== "DOWNLOADED") {
+          d.interaction_status = "READ";
+          d.read_at = (readRes && readRes.read_at) || new Date().toISOString();
+        }
+      } catch (err) {
+        console.warn("Read registration note:", err.message);
+        if (d && d.interaction_status !== "DOWNLOADED") {
+          d.interaction_status = "READ";
+          d.read_at = d.read_at || new Date().toISOString();
+        }
+      }
+
+      renderAuthorizedDocs();
+
+      // Populate reader modal
+      document.getElementById("reader-doc-title").innerText = d.original_filename || "Confidential Document";
+      document.getElementById("reader-doc-id").innerText = d.document_id;
+
+      const badge = document.getElementById("reader-status-badge");
+      const isDownloaded = (d.interaction_status === "DOWNLOADED" || d.downloaded_at);
+      badge.className = `badge ${isDownloaded ? 'badge-pass' : 'badge-info'}`;
+      badge.innerText = isDownloaded ? "DOWNLOADED ✓" : "READ";
+
+      document.getElementById("reader-session-user").innerText = `AUTHORIZED PERSONNEL: @${user.username || 'recipient'}`;
+      document.getElementById("reader-watermark-overlay").innerText = `CONFIDENTIAL • @${user.username || 'recipient'} • ${d.document_id}`;
+
+      const sizeStr = d.file_size ? `${(d.file_size / 1024).toFixed(1)} KB` : 'Protected Binary';
+      document.getElementById("reader-file-size").innerText = sizeStr;
+      document.getElementById("reader-read-time").innerText = d.read_at ? new Date(d.read_at).toLocaleTimeString() : new Date().toLocaleTimeString();
+
+      document.getElementById("doc-reader-modal").style.display = "flex";
+    }
+
+    function closeDocumentReader() {
+      document.getElementById("doc-reader-modal").style.display = "none";
+    }
+
+    function openDocumentDetailsFromReader() {
+      closeDocumentReader();
+      if (activeModalDocId) {
+        openDocumentDetails(activeModalDocId);
+      }
+    }
+
+    async function downloadFromReader() {
+      if (!activeModalDocId) return;
+      const d = cachedAuthDocs.find(item => item.document_id === activeModalDocId);
+      closeDocumentReader();
+      await executeDecryptionAndDownload(activeModalDocId, d ? d.original_filename : null);
+    }
+
+    function openDocumentDetails(docId) {
+      if (!docId) return;
+      activeModalDocId = docId;
+      const d = cachedAuthDocs.find(item => item.document_id === docId) || { document_id: docId, original_filename: "Document" };
+
+      document.getElementById("modal-details-doc-id").innerText = d.document_id;
+      document.getElementById("modal-details-name").innerText = d.original_filename || "Confidential Document";
+      document.getElementById("modal-details-id-val").innerText = d.document_id;
+      document.getElementById("modal-details-size").innerText = d.file_size ? `${(d.file_size / 1024).toFixed(1)} KB` : 'Confidential Payload';
+
+      const statusEl = document.getElementById("modal-details-status");
+      const isDownloaded = (d.interaction_status === "DOWNLOADED" || d.downloaded_at);
+      const isRead = (d.interaction_status === "READ" || d.read_at);
+      if (isDownloaded) {
+        statusEl.className = "badge badge-pass";
+        statusEl.innerText = "DOWNLOADED ✓";
+      } else if (isRead) {
+        statusEl.className = "badge badge-info";
+        statusEl.innerText = "READ";
+      } else {
+        statusEl.className = "badge badge-warn";
+        statusEl.innerText = "RECEIVED / UNREAD";
+      }
+
+      document.getElementById("modal-details-granted").innerText = d.granted_at ? new Date(d.granted_at).toLocaleString() : (d.created_at ? new Date(d.created_at).toLocaleString() : 'N/A');
+
+      let activityStr = "None recorded yet";
+      if (isDownloaded && d.downloaded_at) {
+        activityStr = `Downloaded: ${new Date(d.downloaded_at).toLocaleString()}`;
+      } else if (isRead && d.read_at) {
+        activityStr = `Read: ${new Date(d.read_at).toLocaleString()}`;
+      } else if (d.granted_at) {
+        activityStr = `Received: ${new Date(d.granted_at).toLocaleString()}`;
+      }
+      document.getElementById("modal-details-activity").innerText = activityStr;
+
+      document.getElementById("doc-details-modal").style.display = "flex";
+    }
+
+    function closeDocumentDetails() {
+      document.getElementById("doc-details-modal").style.display = "none";
+    }
+
+    function readFromDetails() {
+      closeDocumentDetails();
+      if (activeModalDocId) {
+        openDocumentReader(activeModalDocId);
+      }
+    }
+
+    async function downloadFromDetails() {
+      if (!activeModalDocId) return;
+      const d = cachedAuthDocs.find(item => item.document_id === activeModalDocId);
+      closeDocumentDetails();
+      await executeDecryptionAndDownload(activeModalDocId, d ? d.original_filename : null);
+    }
+
+    let activeSessionId = null;
+    let activeDownloadFilename = null;
+
+    function populateDecryptionResultCard(data) {
+      if (!data) return;
+      const resultCard = document.getElementById("decryption-result-card");
+      if (!resultCard) return;
+      resultCard.style.display = "block";
+
+      const dt = data.timestamp || data.completed_at || data.started_at || new Date().toISOString();
+      const user = getCurrentUser() || {};
+      const rec = (data.recipient_name && data.recipient_username)
+        ? `${data.recipient_name} (@${data.recipient_username})`
+        : (data.recipient_name || (data.recipient_username ? `@${data.recipient_username}` : (user.display_name ? `${user.display_name} (@${user.username})` : `@${user.username || 'authorized'}`)));
+
+      // Decryption Session Card
+      const sessId = data.session_id || "DS-PENDING";
+      activeSessionId = sessId;
+      document.getElementById("res-session-id").innerText = sessId;
+      document.getElementById("res-session-time").innerText = new Date(dt).toLocaleString();
+      document.getElementById("res-session-recipient").innerText = rec;
+      document.getElementById("res-session-doc").innerText = data.original_filename || data.document_name || "Confidential Document";
+      document.getElementById("res-session-status").innerText = data.decryption_status || "SUCCESS";
+      document.getElementById("res-block-index").innerText = `#${data.ledger_block_index || '1'}`;
+
+      // Forensic Fingerprint / Watermark Card
+      const wmId = data.fingerprint_id || data.watermark_id || "WM-EMBEDDED";
+      document.getElementById("res-watermark-id").innerText = wmId;
+      document.getElementById("res-watermark-hash").innerText = data.fingerprint_hash || data.watermark_id || data.document_hash || "-";
+      document.getElementById("res-watermark-recipient").innerText = rec;
+      document.getElementById("res-watermark-doc-id").innerText = data.document_id || "-";
+      document.getElementById("res-watermark-time").innerText = new Date(dt).toLocaleString();
+      document.getElementById("res-watermark-status").innerText = data.watermark_status || "EMBEDDED";
+      document.getElementById("res-watermark-method").innerText = data.method || "Imperceptible Multi-Layer Steganography";
+
+      // Original Document Card
+      document.getElementById("res-doc-id").innerText = data.document_id || "-";
+      document.getElementById("res-doc-name").innerText = data.original_filename || data.document_name || "confidential_file.pdf";
+      document.getElementById("res-doc-hash").innerText = data.original_hash || data.document_hash || "-";
+      document.getElementById("res-doc-version").innerText = data.document_version || "v1.0";
+
+      // Wire Download Button
+      const dlBtn = document.getElementById("btn-download-fingerprinted");
+      if (dlBtn && sessId) {
+        dlBtn.onclick = (e) => {
+          e.preventDefault();
+          downloadSessionPdf(sessId, data.fingerprinted_filename || `${data.original_filename || 'document'}_fingerprinted_${sessId}.pdf`);
+        };
+      }
+    }
+
+    async function loadLatestDecryptionSession() {
+      try {
+        const latest = await apiCall("/api/recipient/decryption/latest");
+        if (latest && latest.session_id) {
+          populateDecryptionResultCard(latest);
+        }
+      } catch (err) {
+        // No session yet - quiet
+      }
+    }
+
+    async function selectHistorySession(sessionId) {
+      if (!sessionId) return;
+      try {
+        showToast("Loading decryption session details...", "info");
+        const sessionData = await apiCall(`/api/decryption/sessions/${sessionId}`);
+        if (sessionData && sessionData.session_id) {
+          populateDecryptionResultCard(sessionData);
+          document.getElementById("decryption-result-card")?.scrollIntoView({ behavior: 'smooth' });
+          showToast(`Viewing Decryption Session ${sessionId}`, "success");
+        }
+      } catch (err) {
+        showToast(`Could not load session details: ${err.message}`, "error");
+      }
+    }
+
+    async function executeDecryptionAndDownload(docId, origName) {
+      const token = localStorage.getItem("traceseal_token");
+      if (!token) {
+        showToast("Session expired. Please sign in again.", "error");
+        setTimeout(() => window.location.href = "/login", 800);
+        return;
+      }
+
+      showToast("Decrypting document & embedding unique forensic fingerprint...", "info");
+
+      try {
+        const res = await fetch(`/api/documents/${docId}/decrypt-and-download`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) {
+          let errMsg = "Decryption failed";
+          try {
+            const errJson = await res.json();
+            errMsg = errJson.detail || errMsg;
+          } catch(e) {}
+          showToast(errMsg, "error");
+          return;
+        }
+
+        const sessionId = res.headers.get("X-Session-ID") || "SES-COMPLETED";
+        const watermarkId = res.headers.get("X-Watermark-ID") || "WM-EMBEDDED";
+        const fingerprintHash = res.headers.get("X-Fingerprint-Hash") || "-";
+        const blockIndex = res.headers.get("X-Block-Index") || "1";
+        const timestamp = res.headers.get("X-Timestamp") || new Date().toISOString();
+        const recipientName = res.headers.get("X-Recipient-Name") || "";
+        const recipientUsername = res.headers.get("X-Recipient-Username") || "";
+        const docName = res.headers.get("X-Document-Name") || origName || "Document";
+        const origHash = res.headers.get("X-Original-Hash") || res.headers.get("X-Document-Hash") || "-";
+        const docVersion = res.headers.get("X-Document-Version") || "v1.0";
+        const decStatus = res.headers.get("X-Decryption-Status") || "SUCCESS";
+        const wmStatus = res.headers.get("X-Watermark-Status") || "EMBEDDED";
+        const method = res.headers.get("X-Method") || "Imperceptible Multi-Layer Steganography";
+
+        // Read response body as binary Blob
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = blobUrl;
+        
+        // Clean download filename
+        const cleanOrig = origName || "confidential_document.pdf";
+        const stem = cleanOrig.toLowerCase().endsWith(".pdf") ? cleanOrig.slice(0, -4) : cleanOrig;
+        const downloadFilename = `${stem}_fingerprinted_${sessionId}.pdf`;
+        activeSessionId = sessionId;
+        activeDownloadFilename = downloadFilename;
+
+        a.download = downloadFilename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+          a.remove();
+        }, 1500);
+
+        // Update local document status in cache
+        const targetDoc = cachedAuthDocs.find(d => d.document_id === docId);
+        if (targetDoc) {
+          targetDoc.interaction_status = "DOWNLOADED";
+          targetDoc.downloaded_at = new Date().toISOString();
+          renderAuthorizedDocs();
+        }
+
+        // Populate and display the structured 3-card result section
+        populateDecryptionResultCard({
+          session_id: sessionId,
+          timestamp: timestamp,
+          recipient_name: recipientName,
+          recipient_username: recipientUsername,
+          document_id: docId,
+          document_name: docName,
+          original_filename: docName,
+          original_hash: origHash,
+          document_version: docVersion,
+          fingerprint_id: watermarkId,
+          watermark_id: watermarkId,
+          fingerprint_hash: fingerprintHash,
+          watermark_status: wmStatus,
+          method: method,
+          decryption_status: decStatus,
+          ledger_block_index: blockIndex,
+          fingerprinted_filename: downloadFilename
+        });
+
+        // Optionally fetch authoritative session detail from database to ensure complete sync
+        try {
+          const authoritative = await apiCall(`/api/decryption/sessions/${sessionId}`);
+          if (authoritative && authoritative.session_id) {
+            populateDecryptionResultCard(authoritative);
+          }
+        } catch (_) {}
+
+        showToast(`Document decrypted & downloaded successfully! Watermark: ${watermarkId}`, "success");
+        await loadMemberHistory();
+        await loadAuthorizedDocs();
+        document.getElementById("decryption-result-card")?.scrollIntoView({ behavior: 'smooth' });
+      } catch (err) {
+        showToast(`Download error: ${err.message}`, "error");
+      }
+    }
+
+    async function downloadSessionPdf(sessionId, filename) {
+      const token = localStorage.getItem("traceseal_token");
+      if (!token) return;
+
+      try {
+        showToast("Retrieving fingerprinted document...", "info");
+        const res = await fetch(`/api/documents/download/${sessionId}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          let msg = "Download failed";
+          try { msg = (await res.json()).detail || msg; } catch(e) {}
+          showToast(msg, "error");
+          return;
+        }
+        const blob = await res.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = blobUrl;
+        a.download = filename || `confidential_doc_${sessionId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+          a.remove();
+        }, 1500);
+        showToast("Download started!", "success");
+      } catch(e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    // --- Personal History & Clear History Logic ---
+    function openClearHistoryModal() {
+      document.getElementById("clear-history-modal").style.display = "flex";
+    }
+
+    function closeClearHistoryModal() {
+      document.getElementById("clear-history-modal").style.display = "none";
+    }
+
+    async function confirmClearHistory() {
+      const user = getCurrentUser();
+      if (user) {
+        localStorage.setItem(`traceseal_cleared_history_${user.id}`, new Date().toISOString());
+      }
+      closeClearHistoryModal();
+      showToast("Personal history cleared successfully.", "success");
+      pageHistory = 1;
+      await loadMemberHistory();
+    }
+
+    async function loadMemberHistory() {
+      try {
+        const history = await apiCall("/api/decryption/sessions");
+        const user = getCurrentUser();
+        let filtered = history || [];
+
+        // Filter against user personal cleared timestamp (strictly view-level preservation)
+        if (user) {
+          const clearedTimeStr = localStorage.getItem(`traceseal_cleared_history_${user.id}`);
+          if (clearedTimeStr) {
+            const clearedTime = new Date(clearedTimeStr).getTime();
+            filtered = filtered.filter(h => {
+              const itemTime = new Date(h.completed_at || h.started_at || 0).getTime();
+              return itemTime > clearedTime;
+            });
+          }
+        }
+
+        cachedMemberHistory = filtered;
+        renderMemberHistory();
+      } catch (e) {
+        console.error("loadMemberHistory error:", e);
+      }
+    }
+
+    function renderMemberHistory() {
+      const tbody = document.getElementById("history-table-body");
+      if (!tbody) return;
+
+      if (!cachedMemberHistory || cachedMemberHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No previous decryptions found for your account.</td></tr>`;
+        renderTablePagination("history-pagination", 1, 0, "changeHistoryPage", 8);
+        return;
+      }
+
+      const paged = cachedMemberHistory.slice((pageHistory - 1) * 8, pageHistory * 8);
+      tbody.innerHTML = paged.map(h => `
+        <tr>
+          <td class="mono"><b>${h.session_id}</b></td>
+          <td class="mono">${h.document_id}</td>
+          <td><span class="badge badge-info mono">${h.watermark_id || 'N/A'}</span></td>
+          <td class="mono" title="${h.document_hash}">${h.document_hash ? h.document_hash.substring(0, 14) + '...' : 'N/A'}</td>
+          <td style="font-size: 0.8rem;">${h.completed_at ? new Date(h.completed_at).toLocaleString() : h.started_at}</td>
+          <td style="white-space: nowrap;">
+            <div style="display: inline-flex; gap: 0.4rem; align-items: center;">
+              <button class="btn btn-secondary btn-sm" onclick="selectHistorySession('${h.session_id}')" title="View Decryption & Forensic Fingerprint Details">
+                👁️ Details
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="downloadSessionPdf('${h.session_id}', 'fingerprinted_${h.session_id}.pdf')" title="Download fingerprinted copy">
+                📥 Download
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      renderTablePagination("history-pagination", pageHistory, cachedMemberHistory.length, "changeHistoryPage", 8);
+    }
+
+    // --- Security Investigation Notices Logic ---
+    let showAllReceivedWarnings = false;
+
+    function toggleViewAllReceivedWarnings() {
+      showAllReceivedWarnings = !showAllReceivedWarnings;
+      const btn = document.getElementById("btn-toggle-view-all-received-warnings");
+      if (btn) {
+        btn.innerText = showAllReceivedWarnings ? "📄 Paginate Warnings (8)" : "📋 View All Warnings";
+      }
+      pageNotices = 1;
+      renderRecipientNotices();
+    }
+
+    async function loadRecipientNotices() {
+      try {
+        let notices = null;
+        try {
+          notices = await apiCall("/api/forensics/notices/my");
+        } catch (e1) {
+          notices = await apiCall("/api/notices/my");
+        }
+        cachedRecipientNotices = notices || [];
+        renderRecipientNotices();
+      } catch (e) {
+        console.error("Failed to load recipient notices:", e);
+        const tbody = document.getElementById("recipient-notices-table-body");
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--status-fail); padding: 1.5rem;">Unable to load received warnings. Please try again.</td></tr>`;
+        }
+      }
+    }
+
+    async function loadRecipientNoticesSilently() {
+      try {
+        const token = localStorage.getItem("traceseal_token");
+        const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+        let res = await fetch("/api/forensics/notices/my", { headers });
+        if (!res.ok) {
+          res = await fetch("/api/notices/my", { headers });
+        }
+        if (res.ok) {
+          const notices = await res.json();
+          cachedRecipientNotices = notices || [];
+          renderRecipientNotices();
+        }
+      } catch (e) {
+        // silent refresh
+      }
+    }
+
+    function renderRecipientNotices() {
+      const countEl = document.getElementById("stat-warnings-received-count");
+      if (countEl) countEl.innerText = cachedRecipientNotices.length;
+
+      const tbody = document.getElementById("recipient-notices-table-body");
+      if (!tbody) return;
+
+      if (!cachedRecipientNotices || cachedRecipientNotices.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 2rem; font-size: 0.95rem;">No security warnings have been received for your account.</td></tr>`;
+        renderTablePagination("notices-pagination", 1, 0, "changeNoticesPage", 8);
+        return;
+      }
+
+      const pagedNotices = showAllReceivedWarnings
+        ? cachedRecipientNotices
+        : cachedRecipientNotices.slice((pageNotices - 1) * 8, pageNotices * 8);
+
+      tbody.innerHTML = pagedNotices.map(n => {
+        let badgeClass = "badge-warn";
+        if (n.status === "ACKNOWLEDGED" || n.status === "REPLIED") badgeClass = "badge-pass";
+        else if (n.status === "READ") badgeClass = "badge-info";
+        else if (n.status === "CLOSED") badgeClass = "badge-secondary";
+        else if (n.status === "SENT") badgeClass = "badge-warn";
+
+        const warnId = n.warning_id || n.notice_id;
+        const issuerDisplay = n.issued_by ? (n.issued_by.startsWith("@") ? n.issued_by : `@${n.issued_by}`) : "@investigator";
+        const issuerRole = n.issuer_role || "INVESTIGATOR";
+        const subjectDisplay = n.reason || n.subject || "Security Investigation Warning";
+        const dateStr = (n.issued_at || n.created_at) ? new Date(n.issued_at || n.created_at).toLocaleString() : "N/A";
+
+        return `
+          <tr>
+            <td><span class="mono" style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;">${warnId}</span></td>
+            <td><b style="color: #fff;">${issuerDisplay}</b></td>
+            <td><span class="badge badge-info" style="font-size: 0.7rem;">${issuerRole}</span></td>
+            <td>
+              <span style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0;">${subjectDisplay}</span>
+              <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 0.15rem;">${n.document_name || 'General Security Notice'}</div>
+            </td>
+            <td style="font-size: 0.8rem; white-space: nowrap;">${dateStr}</td>
+            <td><span class="badge ${badgeClass}">${n.status}</span></td>
+            <td style="white-space: nowrap;">
+              <div style="display: flex; gap: 0.4rem;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openRecipientNoticeModal('${warnId}')" style="color: #fbbf24; border-color: rgba(245, 158, 11, 0.5);">
+                  👁️ VIEW WARNING
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="downloadNoticePdfById('${warnId}')">
+                  📥 PDF
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      if (showAllReceivedWarnings) {
+        document.getElementById("notices-pagination").innerHTML = `<div style="text-align: center; color: var(--text-dim); font-size: 0.8rem; padding: 0.5rem;">Showing all ${cachedRecipientNotices.length} received warnings.</div>`;
+      } else {
+        renderTablePagination("notices-pagination", pageNotices, cachedRecipientNotices.length, "changeNoticesPage", 8);
+      }
+    }
+
+    async function downloadNoticePdfById(noticeId) {
+      if (!noticeId) return;
+      const token = localStorage.getItem("traceseal_token");
+      try {
+        showToast("Downloading notice PDF...", "info");
+        let res = await fetch(`/api/forensics/notices/${noticeId}/download`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          res = await fetch(`/api/notices/${noticeId}/download`, {
+            headers: token ? { "Authorization": `Bearer ${token}` } : {}
+          });
+        }
+        if (!res.ok) {
+          let errDetail = "Failed to download notice PDF";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch(e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `TraceSeal_Notice_${noticeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Notice PDF downloaded!", "success");
+      } catch (err) {
+        showToast(err.message || "Download failed", "error");
+      }
+    }
+
+    async function openRecipientNoticeModal(noticeId) {
+      try {
+        let n = null;
+        try {
+          n = await apiCall(`/api/forensics/notices/${noticeId}`, "GET", null, false, { silent: true });
+        } catch (e1) {
+          try {
+            n = await apiCall(`/api/notices/${noticeId}`, "GET", null, false, { silent: true });
+          } catch (e2) {
+            console.error("Failed to fetch notice details:", e2);
+            throw e2;
+          }
+        }
+        if (!n) return;
+        activeViewingNotice = n;
+
+        document.getElementById("modal-recipient-notice-id").innerText = n.warning_id || n.notice_id;
+        const issuerEl = document.getElementById("modal-notice-issuer-display");
+        if (issuerEl) {
+          issuerEl.innerText = n.issued_by ? (n.issued_by.startsWith("@") ? n.issued_by : `@${n.issued_by}`) : "@security";
+        }
+        const issuerRoleEl = document.getElementById("modal-notice-issuer-role-display");
+        if (issuerRoleEl) {
+          issuerRoleEl.innerText = `Role: ${n.issuer_role || 'INVESTIGATOR'}`;
+        }
+        document.getElementById("modal-notice-rec-name").innerText = `${n.recipient_name} (@${n.recipient_username || 'unknown'})`;
+        const recRoleEl = document.getElementById("modal-notice-recipient-role-display");
+        if (recRoleEl) {
+          recRoleEl.innerText = `Role: ${n.recipient_role || 'AUTHORISED_PERSONNEL'}`;
+        }
+        const subjEl = document.getElementById("modal-notice-subject");
+        if (subjEl) {
+          subjEl.innerText = n.reason || n.subject || "Security Investigation Warning";
+        }
+        document.getElementById("modal-notice-rec-status").innerText = n.status;
+        const statusBadge = document.getElementById("modal-notice-rec-status");
+        statusBadge.className = `badge ${n.status === 'REPLIED' || n.status === 'ACKNOWLEDGED' ? 'badge-pass' : (n.status === 'READ' ? 'badge-info' : (n.status === 'CLOSED' ? 'badge-secondary' : 'badge-warn'))}`;
+        document.getElementById("modal-notice-rec-doc").innerText = `${n.document_name || 'Confidential Document'} (${n.document_id || 'DOC-CONFIDENTIAL'})`;
+        document.getElementById("modal-notice-rec-case").innerText = n.investigation_id || "N/A";
+        document.getElementById("modal-notice-rec-date").innerText = new Date(n.issued_at || n.created_at).toLocaleString();
+        
+        document.getElementById("modal-notice-rec-body").innerText = n.message || n.notice_body || `Your account has been associated with a security investigation regarding document "${n.document_name}" (${n.document_id}).\n\nYou are required to cooperate with the ongoing investigation and provide any requested information. Further account action may be taken according to the applicable security procedure.`;
+
+        // Render response / reply section
+        const repliedBox = document.getElementById("modal-notice-replied-box");
+        const replyForm = document.getElementById("modal-notice-reply-form");
+        if (n.reply_text) {
+          if (repliedBox) repliedBox.style.display = "block";
+          if (replyForm) replyForm.style.display = "none";
+          const repTextEl = document.getElementById("modal-notice-replied-text");
+          if (repTextEl) repTextEl.innerText = n.reply_text;
+          const repMetaEl = document.getElementById("modal-notice-replied-meta");
+          if (repMetaEl) repMetaEl.innerText = `Submitted on ${n.replied_at ? new Date(n.replied_at).toLocaleString() : 'recently'} by @${n.reply_by || n.recipient_username || 'you'}`;
+        } else {
+          if (repliedBox) repliedBox.style.display = "none";
+          if (replyForm) replyForm.style.display = "block";
+          const inputEl = document.getElementById("notice-reply-input");
+          if (inputEl) inputEl.value = "";
+        }
+
+        const ackBtn = document.getElementById("btn-ack-notice");
+        if (n.status === "ACKNOWLEDGED" || n.status === "CLOSED" || n.status === "REPLIED") {
+          ackBtn.style.display = "none";
+        } else {
+          ackBtn.style.display = "inline-block";
+        }
+
+        document.getElementById("recipient-notice-modal").style.display = "flex";
+
+        // Mark as read in background if currently unread
+        if (n.status === "SENT" || n.status === "PENDING") {
+          const token = localStorage.getItem("traceseal_token");
+          fetch(`/api/forensics/notices/${noticeId}/read`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { "Authorization": `Bearer ${token}` } : {})
+            }
+          }).then(async res => {
+            if (res.ok) {
+              const updated = await res.json();
+              if (updated && updated.status) {
+                n.status = updated.status;
+                const sb = document.getElementById("modal-notice-rec-status");
+                if (sb) {
+                  sb.innerText = updated.status;
+                  sb.className = "badge badge-info";
+                }
+              }
+              loadRecipientNoticesSilently();
+            }
+          }).catch(() => {});
+        }
+      } catch (err) {
+        showToast(err.message || "Failed to load warning details", "error");
+      }
+    }
+
+    function closeRecipientNoticeModal() {
+      activeViewingNotice = null;
+      document.getElementById("recipient-notice-modal").style.display = "none";
+    }
+
+    async function submitNoticeReply() {
+      if (!activeViewingNotice) return;
+      const noticeId = activeViewingNotice.notice_id;
+      const text = (document.getElementById("notice-reply-input").value || "").trim();
+      if (!text) {
+        showToast("Please enter your statement or explanation before submitting.", "error");
+        return;
+      }
+      const btn = document.getElementById("btn-submit-reply");
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
+
+      try {
+        const updated = await apiCall(`/api/forensics/notices/${noticeId}/reply`, "POST", { reply_text: text });
+        activeViewingNotice = updated;
+        showToast("Your formal response has been submitted and logged.", "success");
+
+        // Update modal UI
+        document.getElementById("modal-notice-rec-status").innerText = "REPLIED";
+        document.getElementById("modal-notice-rec-status").className = "badge badge-pass";
+        const repliedBox = document.getElementById("modal-notice-replied-box");
+        const replyForm = document.getElementById("modal-notice-reply-form");
+        if (repliedBox) repliedBox.style.display = "block";
+        if (replyForm) replyForm.style.display = "none";
+        document.getElementById("modal-notice-replied-text").innerText = updated.reply_text;
+        document.getElementById("modal-notice-replied-meta").innerText = `Submitted on ${new Date(updated.replied_at).toLocaleString()} by @${updated.reply_by || 'you'}`;
+
+        const ackBtn = document.getElementById("btn-ack-notice");
+        if (ackBtn) ackBtn.style.display = "none";
+
+        await loadRecipientNotices();
+      } catch (err) {
+        showToast(err.message || "Failed to submit reply", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "✉️ Submit Response";
+      }
+    }
+
+    async function acknowledgeActiveNotice() {
+      if (!activeViewingNotice) return;
+      const noticeId = activeViewingNotice.notice_id;
+      try {
+        showToast("Submitting notice acknowledgement...", "info");
+        const res = await apiCall(`/api/forensics/notices/${noticeId}/acknowledge`, "POST", { status: "ACKNOWLEDGED" });
+        showToast("Notice acknowledged successfully.", "success");
+        activeViewingNotice = res;
+        document.getElementById("modal-notice-rec-status").innerText = "ACKNOWLEDGED";
+        document.getElementById("modal-notice-rec-status").className = "badge badge-pass";
+        document.getElementById("btn-ack-notice").style.display = "none";
+        await loadRecipientNotices();
+      } catch (err) {
+        showToast(err.message || "Acknowledgement failed", "error");
+      }
+    }
+
+    async function downloadActiveNoticePdf() {
+      if (!activeViewingNotice) return;
+      const noticeId = activeViewingNotice.notice_id;
+      const token = localStorage.getItem("traceseal_token");
+      try {
+        showToast("Downloading notice PDF...", "info");
+        let res = await fetch(`/api/forensics/notices/${noticeId}/download`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          res = await fetch(`/api/notices/${noticeId}/download`, {
+            headers: token ? { "Authorization": `Bearer ${token}` } : {}
+          });
+        }
+        if (!res.ok) {
+          let errDetail = "Failed to download notice PDF";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch(e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `TraceSeal_Notice_${noticeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Notice PDF downloaded!", "success");
+      } catch (err) {
+        showToast(err.message || "Download failed", "error");
+      }
+    }
+
+    let currentViewingSigId = null;
+
+    async function signDocumentAction(docId, docName) {
+      if (!confirm(`Do you wish to sign and acknowledge "${docName}" using your NIST FIPS 186-4 DSA private key? This action is legally binding and permanently committed to the tamper-evident ledger.`)) {
+        return;
+      }
+      showToast("Generating DSA-SHA256 digital signature & committing to DLT...", "info");
+      try {
+        const res = await apiCall(`/api/documents/${docId}/sign`, "POST", {
+          version: "v1.0",
+          action: "ACKNOWLEDGE"
+        });
+        showToast("Document signed & acknowledged successfully!", "success");
+        await loadAuthorizedDocs();
+        if (res.signature_id) {
+          openSignatureModal(res.signature_id);
+        }
+      } catch (err) {
+        showToast(err.message || "Signing failed", "error");
+      }
+    }
+
+    async function openSignatureModal(sigId) {
+      currentViewingSigId = sigId;
+      const modal = document.getElementById("recipient-signature-modal");
+      const content = document.getElementById("modal-sig-content");
+      document.getElementById("modal-sig-id").innerText = sigId;
+      modal.style.display = "flex";
+      content.innerHTML = "<div style='color: var(--text-dim); text-align: center; padding: 1rem;'>Cryptographically verifying DSA signature...</div>";
+
+      try {
+        const res = await apiCall(`/api/signatures/${sigId}/verify`, "POST");
+        const statusBadge = res.valid
+          ? `<span class="badge badge-pass" style="font-weight: 700;">VERIFIED (DSA-SHA256) ✓</span>`
+          : `<span class="badge badge-fail" style="font-weight: 700;">${res.verification_status}</span>`;
+
+        content.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.88rem;">
+            <div><b>Signature ID:</b> <span class="mono" style="color: var(--accent-cyan); font-weight: 700;">${res.signature_id}</span></div>
+            <div><b>Signer:</b> <b>${res.recipient_name}</b> <span class="mono" style="color: var(--text-dim);">(@${res.recipient_username})</span></div>
+            <div><b>Document:</b> <b>${res.document_name}</b> <span class="mono" style="color: var(--text-dim);">(${res.document_id})</span></div>
+            <div><b>Document Version:</b> <span class="badge badge-secondary">${res.document_version}</span></div>
+            <div><b>Document SHA-256 Hash:</b> <div class="mono" style="font-size: 0.74rem; word-break: break-all; color: var(--accent-cyan); margin-top: 0.2rem;">${res.document_hash}</div></div>
+            <div><b>Signed Timestamp:</b> <span style="color: var(--text-dim);">${new Date(res.signed_at).toLocaleString()}</span></div>
+            <div><b>Signature Algorithm:</b> <span class="mono" style="color: #f59e0b; font-weight: 600;">${res.signature_algorithm} (NIST FIPS 186-4)</span></div>
+            <div><b>Ledger Block:</b> <span class="badge badge-pass">Block #${res.ledger_block_index || 1}</span></div>
+            <div><b>Verification Status:</b> ${statusBadge}</div>
+            <div style="background: rgba(15, 23, 42, 0.95); padding: 0.65rem; border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.78rem; color: #94a3b8; margin-top: 0.4rem;">
+              ℹ️ ${res.details}
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<div style="color: #ef4444; padding: 1rem;">Failed to verify signature: ${err.message}</div>`;
+      }
+    }
+
+    function closeSignatureModal() {
+      document.getElementById("recipient-signature-modal").style.display = "none";
+      currentViewingSigId = null;
+    }
+
+    async function reverifySignature() {
+      if (currentViewingSigId) {
+        await openSignatureModal(currentViewingSigId);
+        showToast("Signature re-verified against live public key!", "success");
+      }
+    }
+
+    document.getElementById("btn-download-fingerprinted").onclick = (e) => {
+      e.preventDefault();
+      if (activeSessionId) {
+        downloadSessionPdf(activeSessionId, activeDownloadFilename);
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", initMemberPage);
+  </script>
+
+  <!-- Recipient DSA Signature Details Modal -->
+  <div id="recipient-signature-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 9999; align-items: center; justify-content: center; padding: 1.5rem;">
+    <div class="card" style="max-width: 620px; width: 100%; border: 1px solid var(--accent-cyan); box-shadow: 0 20px 40px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">
+            📜 Cryptographic Recipient Signature
+          </h3>
+          <div class="mono" style="font-size: 0.8rem; color: var(--accent-cyan); margin-top: 0.2rem;" id="modal-sig-id">SIG-ID</div>
+        </div>
+        <button type="button" onclick="closeSignatureModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem; margin-bottom: 1.25rem;" id="modal-sig-content">
+        <!-- populated dynamically -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeSignatureModal()">Close</button>
+        <button type="button" class="btn btn-primary" id="btn-reverify-sig" onclick="reverifySignature()">🔍 Re-Verify Signature (DSA)</button>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

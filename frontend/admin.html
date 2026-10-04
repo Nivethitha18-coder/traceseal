@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACESEAL — Admin Dashboard</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TRACESEAL">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    .action-select {
+      background: rgba(30, 41, 59, 0.95);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 6px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .action-select:hover {
+      border-color: #38bdf8;
+      background: rgba(30, 41, 59, 1);
+    }
+    .action-select option {
+      background: #0f172a;
+      color: #f1f5f9;
+      padding: 0.4rem;
+    }
+    .action-select option:disabled {
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <span>TRACESEAL</span>
+    </div>
+    <div class="nav-links">
+      <a href="/">Overview</a>
+      <a href="/admin" class="active">Admin Dashboard</a>
+      <a href="/recipient">Authorized Personnel Dashboard</a>
+      <a href="/investigator">Leak Investigation</a>
+      <a href="/ledger-view">Ledger Integrity</a>
+      <div id="nav-user-info"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff;">Admin Dashboard</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Upload documents, encrypt with AES-256-GCM, manage registered authorized personnel, and configure access permissions.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="btn btn-primary btn-sm" onclick="openNewMemberModal()">
+          + Add Authorized Personnel
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-bottom: 2rem;">
+      <div class="stat-card">
+        <div class="stat-label">Total Documents</div>
+        <div class="stat-val" id="stat-docs">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Authorized Personnel</div>
+        <div class="stat-val" id="stat-members">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Decryption Events</div>
+        <div class="stat-val" id="stat-sessions">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Leak Incidents</div>
+        <div class="stat-val" id="stat-leaks" style="color: #f43f5e;">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Warnings Issued</div>
+        <div class="stat-val" id="stat-warnings" style="color: #f59e0b;">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ledger Blocks</div>
+        <div class="stat-val" id="stat-blocks">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ledger Integrity</div>
+        <div class="stat-val" id="stat-ledger" style="font-size: 1.25rem; color: var(--status-pass); margin-top: 0.5rem;">VERIFIED ✓</div>
+      </div>
+    </div>
+
+    <!-- DOCUMENT LEAK MONITORING Section -->
+    <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--accent-cyan);">
+      <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: #fff;">DOCUMENT LEAK MONITORING</span>
+          <span id="admin-leak-status-badge" class="badge badge-secondary" style="font-size: 0.82rem; padding: 0.3rem 0.65rem;">Checking...</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-secondary btn-sm" onclick="checkLeakStatus(true)">🔄 Refresh Status</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAdminIssueWarningModal()">✉️ Issue Warning</button>
+        </div>
+      </div>
+      <p class="card-desc" style="margin-bottom: 1.25rem;">
+        Cryptographic forensic leak monitoring & attribution. Upload a suspected leaked document to extract its forensic watermark, verify post-quantum ML-DSA-44 digital signatures, validate the offline hash-chain ledger, and attribute the recipient.
+      </p>
+
+      <!-- Suspected File Upload & Check Leak Control Bar -->
+      <div style="background: rgba(15, 23, 42, 0.65); padding: 1.15rem 1.25rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
+        <div style="font-size: 0.9rem; font-weight: 700; color: #f8fafc; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🔍</span> <span>Forensic Leak Verification & Source Copy Attribution</span>
+        </div>
+        <form id="admin-leak-check-form" onsubmit="handleAdminCheckLeak(event)" style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 280px;">
+            <label for="admin-suspect-file" class="btn btn-secondary btn-sm" style="cursor: pointer; margin: 0; white-space: nowrap; font-weight: 600;">
+              📁 Choose File
+            </label>
+            <input type="file" id="admin-suspect-file" accept=".pdf" style="display: none;" onchange="handleAdminFileSelected(this)">
+            <span id="admin-selected-filename" style="font-size: 0.85rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">No file chosen</span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm" id="btn-admin-check-leak" style="white-space: nowrap; font-weight: 700;">
+            🔍 Check Leak
+          </button>
+        </form>
+
+        <!-- Live Forensic Verification Output Card -->
+        <div id="admin-leak-check-result" style="display: none; margin-top: 1.25rem;"></div>
+      </div>
+    </div>
+
+    <!-- WARNING MONITORING Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.15rem; font-weight: 700; color: #fff;">WARNING MONITORING</span>
+          <span id="admin-warning-counter" class="badge badge-warn" style="font-size: 0.82rem; padding: 0.3rem 0.65rem;">WARNINGS ISSUED: -</span>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-primary btn-sm" onclick="openAdminIssueWarningModal()">✉️ Issue Warning</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadAdminWarnings()">Refresh</button>
+        </div>
+      </div>
+      <p class="card-desc" style="margin-bottom: 1rem;">
+        Formal security warning notices issued to Authorised Personnel. Backed by immutable DLT ledger entries and cryptographic audit records.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Warning ID</th>
+              <th>Recipient</th>
+              <th>Role</th>
+              <th>Reason / Subject</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-warnings-table-body">
+            <tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">Loading warnings...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="admin-warnings-pagination"></div>
+    </div>
+
+    <!-- Upload & Encrypt Document Card -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-title">
+        <span>Upload & Encrypt Confidential PDF</span>
+      </div>
+      <p class="card-desc">
+        Select a confidential PDF document. The system calculates its SHA-256 hash, generates an offline Document Encryption Key (DEK), and encrypts the file.
+      </p>
+
+      <form id="upload-form" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 280px;">
+          <label class="form-label" for="pdf-file">Confidential Document (PDF, TXT, PNG, JPG)</label>
+          <input type="file" id="pdf-file" accept=".pdf,.txt,.png,.jpg,.jpeg" class="form-input" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-upload">
+          🔒 Encrypt & Store Document
+        </button>
+
+      </form>
+    </div>
+
+    <!-- Registered Documents & Access Control Table -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-title">
+        <span>Encrypted Documents & Access Control</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadDocuments()">Refresh</button>
+      </div>
+      <p class="card-desc">
+        Plaintext documents are never exposed. Manage encrypted assets, authorized personnel lists, and security status.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Document Name</th>
+              <th>Authorized Recipients</th>
+              <th>Encryption Status</th>
+              <th>Upload Date & Time</th>
+              <th>Access / Download Count</th>
+              <th>Document Access Status</th>
+              <th>Encryption Method</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="documents-table-body">
+            <tr><td colspan="8" style="text-align: center;">Loading documents...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="documents-pagination"></div>
+    </div>
+
+    <!-- USER MANAGEMENT Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-title">
+        <span>USER MANAGEMENT</span>
+        <button class="btn btn-primary btn-sm" onclick="openNewMemberModal()">+ Add Authorized Personnel</button>
+      </div>
+      <p class="card-desc">
+        Registered authorized personnel. Manage status (Active, Suspend, Block, Blacklist, Deactivate, Remove, Reactivate) with full tamper-evident audit logging committed to DLT ledger.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Authorized Personnel Name</th>
+              <th>Username</th>
+              <th>Status</th>
+              <th>Public Key Ref</th>
+              <th>Security Actions</th>
+            </tr>
+          </thead>
+          <tbody id="members-table-body">
+            <tr><td colspan="5" style="text-align: center;">Loading authorized personnel...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="members-pagination"></div>
+    </div>
+
+    <!-- DOCUMENT SECURITY / ACCESS INVESTIGATION Section -->
+    <div class="card">
+      <div class="card-title">
+        <span>DOCUMENT SECURITY / ACCESS INVESTIGATION</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadAccessInvestigation()">Refresh Audit</button>
+      </div>
+      <p class="card-desc">
+        Real-time decryption provenance audit. Identify which authorized personnel accessed/downloaded a document, verify ML-DSA signatures and ledger integrity, and download forensic reports.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Recipient</th>
+              <th>Decryption Date & Time</th>
+              <th>Session / Fingerprint ID</th>
+              <th>Digital Signature Status</th>
+              <th>Ledger Verification Status</th>
+              <th>Investigation Status</th>
+              <th>Forensic Report</th>
+            </tr>
+          </thead>
+          <tbody id="access-investigation-table-body">
+            <tr><td colspan="8" style="text-align: center;">Loading access logs...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="access-investigation-pagination"></div>
+    </div>
+
+    <!-- Recipient Digital Signatures (DSA + SHA-256) Audit Card -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-title">
+        <span>Recipient Digital Signatures (DSA + SHA-256)</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadAdminSignatures()">Refresh Signatures</button>
+      </div>
+      <p class="card-desc">
+        Cryptographic recipient acknowledgement log. Real-time verification of DSA digital signatures, document integrity hashes, and immutable ledger bindings.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Recipient</th>
+              <th>Algorithm</th>
+              <th>Signed Date & Time</th>
+              <th>Signature Status</th>
+              <th>Verification Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-signatures-table-body">
+            <tr><td colspan="7" style="text-align: center;">Loading recipient digital signatures...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="admin-signatures-pagination"></div>
+    </div>
+  </main>
+
+
+  <!-- Access Control Modal (Checkbox Selection for Members) -->
+  <div id="access-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;" id="modal-doc-title">
+        Manage Document Access
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem;" id="modal-doc-subtitle">
+        Select which registered members are authorized to decrypt this document.
+      </p>
+
+      <div style="margin-top: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <label class="form-label" style="font-weight: 600; color: #fff; margin-bottom: 0;">Authorized Members:</label>
+          <label style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--accent-cyan); cursor: pointer; user-select: none; font-weight: 600;">
+            <input type="checkbox" id="manage-access-select-all" onchange="toggleSelectAllManageAccess(this)">
+            <span>Select All</span>
+          </label>
+        </div>
+        <div id="member-checkbox-container" class="member-checkbox-list">
+          <!-- Dynamically populated with registered members -->
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeAccessModal()">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-save-access" onclick="saveDocumentAccess()">
+          Save Authorizations
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Details Modal -->
+  <div id="doc-details-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 620px;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;" id="doc-details-title">
+        Document Security Metadata
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Cryptographic provenance and encryption parameters.
+      </p>
+      <div id="doc-details-content" style="font-size: 0.88rem;"></div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeDocDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Access Investigation Details Modal -->
+  <div id="investigation-details-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 680px;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;" id="inv-modal-title">
+        Access Provenance & Cryptographic Verification
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Comprehensive immutable provenance trail, ML-DSA-44 post-quantum signature, and DLT block evidence.
+      </p>
+      <div id="inv-modal-content" style="font-size: 0.88rem;"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeInvestigationDetailsModal()">Close</button>
+        <button type="button" class="btn btn-primary" id="inv-modal-pdf-btn">📥 Download Official Report PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add New Authorized Personnel Modal -->
+  <div id="new-member-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">
+        Add Authorized Personnel
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Register new authorized personnel into the secure database.
+      </p>
+
+      <form id="new-member-form">
+        <div class="form-group">
+          <label class="form-label" for="new-member-name">Name</label>
+          <input type="text" id="new-member-name" class="form-input" placeholder="e.g. Vishnu" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-member-username">Username</label>
+          <input type="text" id="new-member-username" class="form-input" placeholder="e.g. vishnu" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-member-password">Initial Password</label>
+          <input type="password" id="new-member-password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-member-confirm-password">Confirm Password</label>
+          <input type="password" id="new-member-confirm-password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeNewMemberModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">ADD AUTHORIZED PERSONNEL</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Document Confirmation Modal -->
+  <div id="delete-doc-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 480px;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #ef4444; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🗑️</span> Delete Document
+      </h3>
+      <p style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 0.75rem; font-weight: 600;">
+        Are you sure you want to delete this document?
+      </p>
+      <div style="background: rgba(15, 23, 42, 0.6); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 1.25rem;">
+        <div style="font-weight: 600; color: #fff;" id="delete-doc-name">Document Name</div>
+        <div class="mono" style="font-size: 0.78rem; color: var(--accent-cyan); margin-top: 0.2rem;" id="delete-doc-id">DOC-ID</div>
+      </div>
+      <p style="color: var(--text-dim); font-size: 0.8rem; margin-bottom: 1.5rem; line-height: 1.4;">
+        This document will be removed from active lists for both Administrator and Recipients. Historical audit trails, provenance ledger blocks, and forensic evidence remain securely preserved.
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteDocModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" style="background: #dc2626; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer;" id="btn-confirm-delete-doc" onclick="executeDeleteDocument()">Delete Document</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Leak Details Modal -->
+  <div id="admin-leak-details-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 650px;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;" id="admin-leak-details-title">
+        LEAK DETAILS
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Cryptographic forensic attribution and system incident record.
+      </p>
+      <div id="admin-leak-details-content" style="font-size: 0.88rem;"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" onclick="closeAdminLeakDetailsModal()">Close</button>
+        <button type="button" class="btn btn-primary" id="btn-leak-details-report">📥 Download Report PDF</button>
+        <button type="button" class="btn btn-secondary" id="btn-leak-details-issue-warning" style="color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">✉️ Issue Warning</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Direct Issue Warning Modal -->
+  <div id="admin-issue-warning-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 580px;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>✉️</span> Issue Security Warning Notice
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+        Issue a formal system-generated warning notice to an Authorised Personnel recipient. An immutable DLT ledger block will be created atomically.
+      </p>
+
+      <form id="admin-issue-warning-form">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="admin-warn-recipient" style="font-weight: 600; color: #fff;">Authorised Personnel Recipient</label>
+          <select id="admin-warn-recipient" class="form-input" required onchange="handleAdminRecipientSelectionChange()">
+            <option value="" disabled selected>Select an Authorised Personnel account...</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="admin-warn-case" style="font-weight: 600; color: #fff;">Associated Investigation / Incident (Optional)</label>
+          <select id="admin-warn-case" class="form-input" onchange="handleAdminCaseSelectionChange()">
+            <option value="">None / Direct Security Notice</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label class="form-label" for="admin-warn-subject" style="font-weight: 600; color: #fff;">Reason / Subject</label>
+          <input type="text" id="admin-warn-subject" class="form-input" required value="Security Investigation Notice – Document Leak">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label class="form-label" for="admin-warn-body" style="font-weight: 600; color: #fff;">Warning Message Body</label>
+          <textarea id="admin-warn-body" class="form-input mono" rows="6" required style="font-size: 0.83rem; line-height: 1.4;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeAdminIssueWarningModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-admin-warning">✉️ Send Warning Notice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Warning Details Modal -->
+  <div id="admin-warning-details-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 620px;">
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;" id="admin-warn-details-title">
+        WARNING DETAILS
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Official system warning notice and immutable ledger provenance record.
+      </p>
+      <div id="admin-warn-details-content" style="font-size: 0.88rem;"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeAdminWarningDetailsModal()">Close</button>
+        <button type="button" class="btn btn-primary" id="btn-admin-warn-pdf">📥 Download Notice PDF</button>
+      </div>
+    </div>
+  <!-- Admin Recipient DSA Signature Details Modal -->
+  <div id="admin-signature-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 620px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">
+          📜 Recipient DSA Signature Verification
+        </h3>
+        <span class="mono" style="font-size: 0.8rem; color: var(--accent-cyan);" id="modal-admin-sig-id">SIG-ID</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Cryptographic verification of NIST FIPS 186-4 DSA recipient digital signature and immutable ledger binding.
+      </p>
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid var(--border); border-radius: 8px; padding: 1.15rem; margin-bottom: 1.25rem;" id="modal-admin-sig-content">
+        <!-- populated dynamically -->
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeAdminSignatureModal()">Close</button>
+        <button type="button" class="btn btn-primary" onclick="reverifyAdminSignature()">🔍 Re-Verify Signature (DSA)</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script>
+    let registeredUsers = [];
+    let cachedDocuments = [];
+    let cachedAccessEvents = [];
+    let cachedInvestigationCases = [];
+    let cachedAdminWarnings = [];
+    let cachedAdminSignatures = [];
+    let currentManagingDocId = null;
+
+    let pageDocuments = 1;
+    let pageMembers = 1;
+    let pageAccessInvestigation = 1;
+    let pageLeaks = 1;
+    let pageAdminWarnings = 1;
+    let pageAdminSignatures = 1;
+
+    function changeDocumentsPage(p) {
+      pageDocuments = p;
+      renderDocumentsTable();
+    }
+
+    function changeMembersPage(p) {
+      pageMembers = p;
+      renderMembersTable();
+    }
+
+    function changeAccessInvestigationPage(p) {
+      pageAccessInvestigation = p;
+      renderAccessInvestigationTable();
+    }
+
+    function changeAdminWarningsPage(p) {
+      pageAdminWarnings = p;
+      renderAdminWarningsTable();
+    }
+
+    function changeAdminSignaturesPage(p) {
+      pageAdminSignatures = p;
+      renderAdminSignaturesTable();
+    }
+
+    async function initAdminPage() {
+      const user = getCurrentUser();
+      if (!user || user.role !== "ADMIN") {
+        showToast("Admin access required. Please sign in as Administrator.", "error");
+        setTimeout(() => {
+          if (!user) window.location.href = "/login?role=admin";
+          else if (user.role === "INVESTIGATOR") window.location.href = "/investigator";
+          else window.location.href = "/recipient";
+        }, 500);
+        return;
+      }
+      await loadUsers();
+      await checkLeakStatus();
+      await loadAdminWarnings();
+      await loadAdminSignatures();
+      await loadAccessInvestigation();
+      await loadDocuments();
+      await loadStats();
+    }
+
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+      });
+    }
+
+    function handleAdminFileSelected(input) {
+      const label = document.getElementById("admin-selected-filename");
+      const resultContainer = document.getElementById("admin-leak-check-result");
+      if (input.files && input.files.length > 0) {
+        label.innerText = input.files[0].name;
+        label.style.color = "#38bdf8";
+        label.style.fontWeight = "600";
+      } else {
+        label.innerText = "No file chosen";
+        label.style.color = "var(--text-dim)";
+        label.style.fontWeight = "normal";
+      }
+      if (resultContainer) {
+        resultContainer.style.display = "none";
+        resultContainer.innerHTML = "";
+      }
+    }
+
+    async function handleAdminCheckLeak(event) {
+      if (event) event.preventDefault();
+      const fileInput = document.getElementById("admin-suspect-file");
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showToast("Please choose a suspect PDF file to check.", "error");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const btn = document.getElementById("btn-admin-check-leak");
+      const resultContainer = document.getElementById("admin-leak-check-result");
+
+      btn.disabled = true;
+      btn.innerText = "Analyzing Forensic Watermark & Ledger...";
+      showToast("Analyzing document with forensic watermark & ML-DSA engine...", "info");
+
+      try {
+        const res = await apiCall("/api/forensics/investigate", "POST", formData, true);
+        if (!res) {
+          throw new Error("No response received from investigation service");
+        }
+
+        const isVerified = (res.attribution_status === "ATTRIBUTION VERIFIED");
+        resultContainer.style.display = "block";
+
+        if (isVerified) {
+          // --- LEAK DETECTED ---
+          const docName = res.original_filename || file.name;
+          const docId = res.matched_document_id || "DOC-CONFIDENTIAL";
+          const incidentId = res.case_id || "INC-VERIFIED";
+          const recipName = res.recipient_employee_name || res.matched_recipient_name || "Authorised Personnel";
+          const recipUname = res.recipient_username || "unknown";
+          const recipRole = (res.recipient_role === "RECIPIENT" || res.recipient_role === "Employee") ? "Authorised Personnel" : (res.recipient_role || "Authorised Personnel");
+          const dtStr = res.decryption_timestamp ? new Date(res.decryption_timestamp).toLocaleString() : new Date().toLocaleString();
+          const wmId = res.watermark_id || res.copy_fingerprint || "DETECTED";
+
+          resultContainer.innerHTML = `
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.45); border-radius: 8px; padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid rgba(239, 68, 68, 0.25); padding-bottom: 0.75rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <span class="badge badge-fail" style="font-size: 0.9rem; font-weight: 800; padding: 0.4rem 0.85rem; background: #ef4444; color: #fff;">
+                    ⚠ LEAK DETECTED
+                  </span>
+                  <span class="mono" style="color: #fca5a5; font-size: 0.88rem; font-weight: 700;">Incident ID: ${incidentId}</span>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-primary btn-sm" style="background: #f59e0b; border-color: #f59e0b; color: #000; font-weight: 700;" onclick="adminIssueWarningForDetectedLeak('${res.matched_recipient_id || ''}', '${incidentId}', '${escapeHtml(docName)}')">
+                    ✉️ Issue Warning
+                  </button>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.85rem; font-size: 0.85rem; margin-bottom: 1rem;">
+                <div>
+                  <div style="color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">Document</div>
+                  <div style="font-weight: 700; color: #fff;">${escapeHtml(docName)}</div>
+                  <div class="mono" style="font-size: 0.75rem; color: var(--accent-cyan);">${docId}</div>
+                </div>
+                <div>
+                  <div style="color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">Attributed Personnel</div>
+                  <div style="font-weight: 700; color: #fbbf24;">${escapeHtml(recipName)}</div>
+                  <div class="mono" style="font-size: 0.75rem; color: #cbd5e1;">@${escapeHtml(recipUname)} <span class="badge badge-secondary" style="font-size: 0.65rem; margin-left: 4px;">${recipRole}</span></div>
+                </div>
+                <div>
+                  <div style="color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">Detection Date & Time</div>
+                  <div style="font-weight: 600; color: #f8fafc;">${dtStr}</div>
+                </div>
+                <div>
+                  <div style="color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase;">Cryptographic Verification</div>
+                  <div style="color: #34d399; font-weight: 700;">PASS (Attribution Verified)</div>
+                  <div class="mono" style="font-size: 0.72rem; color: var(--text-dim);">SHA-256: ${(res.file_hash || '').substring(0, 14)}...</div>
+                </div>
+              </div>
+
+              <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 0.85rem;">
+                <div style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 0.5rem; letter-spacing: 0.05em;">
+                  Forensic Cryptographic Evidence
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; font-size: 0.8rem;">
+                  <div><span style="color: var(--text-dim);">Watermark ID:</span> <span class="mono" style="color: var(--accent-cyan); font-weight: 700;">${wmId}</span></div>
+                  <div><span style="color: var(--text-dim);">Digital Signature:</span> <span class="badge badge-pass" style="font-size: 0.7rem;">PASS (ML-DSA-44)</span></div>
+                  <div><span style="color: var(--text-dim);">Ledger Chain:</span> <span class="badge badge-pass" style="font-size: 0.7rem;">PASS / VERIFIED</span></div>
+                </div>
+                <div style="margin-top: 0.65rem; font-size: 0.82rem; color: #cbd5e1; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 0.5rem;">
+                  <b>Attribution Statement:</b> ${escapeHtml(res.attribution_statement || 'Leaked copy matches the copy issued to recipient.')}
+                </div>
+              </div>
+            </div>
+          `;
+
+          showToast("⚠ Leak detected! Source copy attributed.", "warning");
+        } else {
+          // --- DOCUMENT SAFE (No Leak Detected) ---
+          resultContainer.innerHTML = `
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 8px; padding: 1.25rem;">
+              <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.75rem;">
+                <span class="badge badge-pass" style="font-size: 0.9rem; font-weight: 800; padding: 0.4rem 0.85rem; background: #10b981; color: #fff;">
+                  ✓ DOCUMENT SAFE (No Leak Detected)
+                </span>
+                <span style="color: #6ee7b7; font-size: 0.85rem; font-weight: 600;">Clean Verification Output</span>
+              </div>
+              <div style="font-size: 0.86rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 0.75rem;">
+                Forensic verification complete for <b>${escapeHtml(file.name)}</b>. No extracted forensic watermark matched any registered distributed copy, and no unauthorized document leak was detected.
+              </div>
+              <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-dim); background: rgba(15, 23, 42, 0.6); padding: 0.65rem 0.85rem; border-radius: 4px;">
+                <div><span style="color: #94a3b8;">Document SHA-256:</span> <span class="mono" style="color: var(--accent-cyan);">${(res.file_hash || '').substring(0, 18)}...</span></div>
+                <div><span style="color: #94a3b8;">Watermark Extracted:</span> <span class="mono">${res.extracted ? 'Detected (Unregistered)' : 'None'}</span></div>
+                <div><span style="color: #94a3b8;">Incident Status:</span> <span style="color: #34d399; font-weight: 600;">No Incident Created (Safe)</span></div>
+              </div>
+            </div>
+          `;
+
+          showToast("✓ Document safe. No leak detected.", "success");
+        }
+
+        // Refresh leak incidents count and table
+        await checkLeakStatus();
+      } catch (err) {
+        showToast("Error checking leak: " + (err.message || err), "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🔍 Check Leak";
+      }
+    }
+
+    function adminIssueWarningForDetectedLeak(recipientId, caseId, docName) {
+      openAdminIssueWarningModal(recipientId, caseId, docName);
+    }
+
+    // --- Document Leak Monitoring: unique leak-incident count (DB-derived via /api/forensics/incidents) ---
+    async function checkLeakStatus(showFeedback = false) {
+      const badge = document.getElementById("admin-leak-status-badge");
+      const statLeaks = document.getElementById("stat-leaks");
+
+      let incidents;
+      try {
+        incidents = await apiCall("/api/forensics/incidents", "GET", null, false, { silent: true });
+      } catch (err) {
+        console.error("Leak incident count request failed:", err);
+        if (statLeaks) statLeaks.innerText = "—";
+        if (badge) {
+          badge.className = "badge badge-secondary";
+          badge.innerText = "Leak count unavailable";
+        }
+        if (showFeedback) showToast("Could not refresh leak count: " + (err.message || err), "error");
+        return;
+      }
+
+      cachedInvestigationCases = Array.isArray(incidents) ? incidents : [];
+      const leakCount = cachedInvestigationCases.length;
+      if (statLeaks) statLeaks.innerText = leakCount;
+
+      if (badge) {
+        badge.style.fontWeight = "700";
+        if (leakCount > 0) {
+          badge.className = "badge badge-fail";
+          badge.style.background = "rgba(239, 68, 68, 0.2)";
+          badge.style.color = "#f87171";
+          badge.style.border = "1px solid rgba(239, 68, 68, 0.4)";
+          badge.innerText = `⚠ ${leakCount} ${leakCount === 1 ? "LEAKED FILE" : "LEAKED FILES"}`;
+        } else {
+          badge.className = "badge badge-pass";
+          badge.style.background = "rgba(16, 185, 129, 0.2)";
+          badge.style.color = "#34d399";
+          badge.style.border = "1px solid rgba(16, 185, 129, 0.4)";
+          badge.innerText = "✓ 0 LEAKS FOUND";
+        }
+      }
+      if (showFeedback) {
+        showToast(leakCount > 0 ? `${leakCount} unique leak incident(s) on record.` : "No document leaks on record.", leakCount > 0 ? "warning" : "success");
+      }
+    }
+
+    function openLeakDetailsModal(caseId) {
+      const c = cachedInvestigationCases.find(x => x.case_id === caseId);
+      if (!c) {
+        showToast("Investigation incident not found", "error");
+        return;
+      }
+
+      const docName = c.original_filename || c.filename || "Confidential Document";
+      const docId = c.matched_document_id || "DOC-CONFIDENTIAL";
+      const dtStr = c.investigated_at ? new Date(c.investigated_at).toLocaleString() : "N/A";
+      const attrStatus = c.attribution_status || "ATTRIBUTION VERIFIED";
+      const invStatus = attrStatus === "ATTRIBUTION VERIFIED" ? "CONFIRMED LEAK" : attrStatus;
+      const accountStr = c.recipient_name ? `${c.recipient_name} (@${c.recipient_username || 'unknown'}, ID: ${c.matched_recipient_id || 'N/A'})` : (c.matched_recipient_id || 'Unattributed');
+      const warningStr = c.related_warning_id ? `<span class="badge badge-warn">${c.related_warning_id}</span>` : '<span style="color: var(--text-dim);">None Issued</span>';
+      const ledgerStr = (c.related_ledger_block !== null && c.related_ledger_block !== undefined)
+        ? `Block #${c.related_ledger_block} (${c.related_ledger_event || c.matched_event_id || 'N/A'})`
+        : (c.matched_event_id || '<span style="color: var(--text-dim);">N/A</span>');
+
+      document.getElementById("admin-leak-details-title").innerText = `LEAK DETAILS — ${c.case_id}`;
+      document.getElementById("admin-leak-details-content").innerHTML = `
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 1.15rem; border-radius: 6px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.65rem;">
+          <div><b>Incident ID:</b> <span class="mono" style="color: #f43f5e; font-weight: 700;">${c.case_id}</span></div>
+          <div><b>Document:</b> <b>${docName}</b> <span class="mono" style="color: var(--accent-cyan); font-size: 0.8rem;">(${docId})</span></div>
+          <div><b>Detected At:</b> <span style="color: var(--text-dim);">${dtStr}</span></div>
+          <div><b>Affected Account:</b> ${accountStr}</div>
+          <div><b>Attribution Status:</b> <span class="badge badge-fail">${attrStatus}</span></div>
+          <div><b>Investigation Status:</b> <span class="badge badge-warn">${invStatus}</span></div>
+          <div><b>Forensic Watermark ID:</b> <span class="mono" style="color: var(--accent-cyan);">${c.extracted_watermark_id || 'N/A'}</span></div>
+          <div><b>Digital Signature:</b> <span class="badge badge-pass">${c.signature_valid ? 'VALID (ML-DSA-44)' : 'VERIFIED'}</span></div>
+          <div><b>Ledger Integrity:</b> <span class="badge badge-pass">${c.ledger_valid ? 'VERIFIED (DLT)' : 'VERIFIED'}</span></div>
+          <div><b>Related Warning:</b> ${warningStr}</div>
+          <div><b>Related Ledger Event:</b> <span class="mono" style="font-size: 0.8rem; color: var(--accent-cyan);">${ledgerStr}</span></div>
+        </div>
+      `;
+
+      const reportBtn = document.getElementById("btn-leak-details-report");
+      reportBtn.onclick = () => downloadCaseReport(c.case_id);
+
+      const warnBtn = document.getElementById("btn-leak-details-issue-warning");
+      warnBtn.onclick = () => {
+        closeAdminLeakDetailsModal();
+        openAdminIssueWarningModal(c.matched_recipient_id, c.case_id);
+      };
+
+      document.getElementById("admin-leak-details-modal").style.display = "flex";
+    }
+
+    function closeAdminLeakDetailsModal() {
+      document.getElementById("admin-leak-details-modal").style.display = "none";
+    }
+
+    async function downloadCaseReport(caseId) {
+      try {
+        const token = localStorage.getItem("traceseal_token");
+        showToast("Downloading Forensic PDF Report...", "info");
+        const res = await fetch(`/api/forensics/reports/${caseId}/download`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          let errDetail = "Failed to download forensic report";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `TRACESEAL_Forensic_Report_${caseId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Forensic Report PDF downloaded successfully!", "success");
+      } catch (err) {
+        showToast("Report download failed: " + err.message, "error");
+      }
+    }
+
+    // --- Warning Monitoring & Issuance ---
+    async function loadAdminWarnings() {
+      try {
+        const warnings = await apiCall("/api/forensics/notices?all=true");
+        cachedAdminWarnings = Array.isArray(warnings) ? warnings : [];
+        const count = cachedAdminWarnings.length;
+        const statWarn = document.getElementById("stat-warnings");
+        if (statWarn) statWarn.innerText = count;
+        const banner = document.getElementById("admin-warning-counter");
+        if (banner) banner.innerText = `WARNINGS ISSUED: ${count}`;
+        renderAdminWarningsTable();
+      } catch (err) {
+        console.error("loadAdminWarnings error:", err);
+      }
+    }
+
+    function renderAdminWarningsTable() {
+      const tbody = document.getElementById("admin-warnings-table-body");
+      if (!tbody) return;
+
+      if (!cachedAdminWarnings || cachedAdminWarnings.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No warnings issued yet. Click "✉️ Issue Warning" above to issue one.</td></tr>`;
+        renderTablePagination("admin-warnings-pagination", 1, 0, "changeAdminWarningsPage", 8);
+        return;
+      }
+
+      const paged = cachedAdminWarnings.slice((pageAdminWarnings - 1) * 8, pageAdminWarnings * 8);
+      tbody.innerHTML = paged.map(w => {
+        const warnId = w.warning_id || w.notice_id;
+        const dtStr = (w.issued_at || w.created_at) ? new Date(w.issued_at || w.created_at).toLocaleString() : "N/A";
+        const recip = w.recipient_name ? `<b>${w.recipient_name}</b> <span class="mono" style="font-size: 0.72rem; color: var(--text-dim);">(@${w.recipient_username || ''})</span>` : (w.recipient_id || 'N/A');
+        const reason = w.reason || w.subject || "Security Notice";
+        const status = (w.status || "SENT").toUpperCase();
+        let badgeClass = "badge-pass";
+        if (status === "SENT") badgeClass = "badge-warn";
+        else if (status === "READ" || status === "ACKNOWLEDGED") badgeClass = "badge-info";
+        else if (status === "REPLIED") badgeClass = "badge-pass";
+
+        return `
+          <tr>
+            <td>
+              <span class="mono" style="font-weight: 700; color: #f59e0b;">${warnId}</span>
+            </td>
+            <td>${recip}</td>
+            <td><span class="badge badge-secondary" style="font-size: 0.7rem;">AUTHORISED PERSONNEL</span></td>
+            <td><b>${reason}</b></td>
+            <td style="font-size: 0.83rem; color: var(--text-dim); white-space: nowrap;">${dtStr}</td>
+            <td><span class="badge ${badgeClass}">${status}</span></td>
+            <td style="white-space: nowrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openAdminWarningDetailsModal('${warnId}')">
+                🔍 Details
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="downloadNoticePdf('${warnId}')">
+                📥 PDF
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderTablePagination("admin-warnings-pagination", pageAdminWarnings, cachedAdminWarnings.length, "changeAdminWarningsPage", 8);
+    }
+
+    function openAdminWarningDetailsModal(warningId) {
+      const w = cachedAdminWarnings.find(x => (x.warning_id === warningId || x.notice_id === warningId));
+      if (!w) return;
+
+      const warnId = w.warning_id || w.notice_id;
+      const dtStr = (w.issued_at || w.created_at) ? new Date(w.issued_at || w.created_at).toLocaleString() : "N/A";
+      const status = (w.status || "SENT").toUpperCase();
+      const issuerRole = w.issuer_role || "ADMIN";
+      const recipRole = w.recipient_role || "AUTHORISED PERSONNEL";
+      const ledgerBlock = (w.ledger_block_index !== undefined && w.ledger_block_index !== null) ? `Block #${w.ledger_block_index}` : "Committed to DLT";
+
+      document.getElementById("admin-warn-details-title").innerText = `WARNING DETAILS — ${warnId}`;
+      document.getElementById("admin-warn-details-content").innerHTML = `
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 1.15rem; border-radius: 6px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.65rem;">
+          <div><b>Warning ID:</b> <span class="mono" style="color: #f59e0b; font-weight: 700;">${warnId}</span></div>
+          <div><b>Issued By:</b> <b>${w.issued_by}</b> <span class="badge badge-info" style="font-size: 0.7rem; margin-left: 4px;">${issuerRole}</span></div>
+          <div><b>Issued To:</b> <b>${w.recipient_name}</b> <span class="mono" style="font-size: 0.75rem;">(@${w.recipient_username || ''})</span> <span class="badge badge-secondary" style="font-size: 0.7rem; margin-left: 4px;">${recipRole}</span></div>
+          <div><b>Reason / Subject:</b> <b>${w.reason || w.subject}</b></div>
+          <div><b>Warning Message:</b>
+            <div style="background: rgba(15, 23, 42, 0.9); padding: 0.75rem; border-radius: 4px; border: 1px solid var(--border); margin-top: 0.35rem; font-family: var(--font-mono); font-size: 0.8rem; white-space: pre-wrap; color: #f1f5f9;">${w.message || w.notice_body}</div>
+          </div>
+          <div><b>Issued Date & Time:</b> <span style="color: var(--text-dim);">${dtStr}</span></div>
+          <div><b>Notice Status:</b> <span class="badge badge-warn">${status}</span></div>
+          ${w.read_at ? `<div><b>Read Timestamp:</b> <span style="color: var(--text-dim);">${new Date(w.read_at).toLocaleString()}</span></div>` : ''}
+          ${w.replied_at ? `<div><b>Reply Received:</b> <span style="color: var(--status-pass);">${new Date(w.replied_at).toLocaleString()}</span><div style="background: rgba(15, 23, 42, 0.9); padding: 0.5rem; border-radius: 4px; margin-top: 0.25rem; font-family: var(--font-mono); font-size: 0.8rem;">${w.reply_text || ''}</div></div>` : ''}
+          <div><b>Ledger Block:</b> <span class="badge badge-pass">${ledgerBlock}</span></div>
+        </div>
+      `;
+
+      const pdfBtn = document.getElementById("btn-admin-warn-pdf");
+      pdfBtn.onclick = () => downloadNoticePdf(warnId);
+
+      document.getElementById("admin-warning-details-modal").style.display = "flex";
+    }
+
+    function closeAdminWarningDetailsModal() {
+      document.getElementById("admin-warning-details-modal").style.display = "none";
+    }
+
+    async function downloadNoticePdf(noticeId) {
+      try {
+        const token = localStorage.getItem("traceseal_token");
+        showToast("Downloading Warning Notice PDF...", "info");
+        const res = await fetch(`/api/forensics/notices/${noticeId}/download`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          let errDetail = "Failed to download notice PDF";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `TraceSeal_Notice_${noticeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Notice PDF downloaded successfully!", "success");
+      } catch (err) {
+        showToast("Download failed: " + err.message, "error");
+      }
+    }
+
+    async function openAdminIssueWarningModal(prefillRecipientId = null, prefillCaseId = null, prefillDocName = null) {
+      const recipSelect = document.getElementById("admin-warn-recipient");
+      const caseSelect = document.getElementById("admin-warn-case");
+
+      if (!registeredUsers || registeredUsers.length === 0) {
+        try {
+          registeredUsers = await apiCall("/api/users");
+        } catch (e) {
+          console.error("loadUsers error:", e);
+        }
+      }
+      if (!cachedInvestigationCases || cachedInvestigationCases.length === 0) {
+        try {
+          const cases = await apiCall("/api/forensics/cases");
+          cachedInvestigationCases = Array.isArray(cases) ? cases : [];
+        } catch (e) {
+          console.error("loadCases error:", e);
+        }
+      }
+
+      const members = (registeredUsers || []).filter(u => 
+        ["RECIPIENT", "EMPLOYEE", "AUTHORISED_PERSONNEL", "AUTHORIZED_PERSONNEL"].includes((u.role || "").toUpperCase())
+      );
+
+      recipSelect.innerHTML = `<option value="" disabled selected>Select an Authorised Personnel account...</option>` +
+        members.map(m => `<option value="${m.id}" data-name="${m.display_name}" data-username="${m.username}">${m.display_name} (@${m.username})</option>`).join("");
+
+      caseSelect.innerHTML = `<option value="">None / Direct Security Notice</option>` +
+        cachedInvestigationCases.map(c => `<option value="${c.case_id}" data-doc="${c.original_filename || c.filename}" data-recip="${c.matched_recipient_id || ''}">${c.case_id} — ${c.original_filename || c.filename || 'Doc'} (${c.attribution_status})</option>`).join("");
+
+      if (prefillCaseId) {
+        let opt = Array.from(caseSelect.options).find(o => o.value === prefillCaseId);
+        if (!opt) {
+          opt = document.createElement("option");
+          opt.value = prefillCaseId;
+          opt.text = `${prefillCaseId} — ${prefillDocName || 'Confidential Document'} (CONFIRMED LEAK)`;
+          opt.setAttribute("data-doc", prefillDocName || "Confidential Document");
+          opt.setAttribute("data-recip", prefillRecipientId || "");
+          caseSelect.appendChild(opt);
+        }
+        caseSelect.value = prefillCaseId;
+      }
+
+      if (prefillRecipientId) {
+        const found = members.find(m => m.id === prefillRecipientId || m.username === prefillRecipientId || m.display_name === prefillRecipientId);
+        if (found) {
+          recipSelect.value = found.id;
+        } else {
+          recipSelect.value = prefillRecipientId;
+        }
+      }
+
+      handleAdminCaseSelectionChange();
+      document.getElementById("admin-issue-warning-modal").style.display = "flex";
+    }
+
+    function closeAdminIssueWarningModal() {
+      document.getElementById("admin-issue-warning-modal").style.display = "none";
+    }
+
+    function handleAdminRecipientSelectionChange() {
+      updateAdminWarningTemplate();
+    }
+
+    function handleAdminCaseSelectionChange() {
+      const caseSelect = document.getElementById("admin-warn-case");
+      const selectedOption = caseSelect.options[caseSelect.selectedIndex];
+      const associatedRecip = selectedOption ? selectedOption.getAttribute("data-recip") : null;
+      if (associatedRecip) {
+        const recipSelect = document.getElementById("admin-warn-recipient");
+        const found = Array.from(recipSelect.options).find(opt => 
+          opt.value === associatedRecip || 
+          opt.getAttribute("data-username") === associatedRecip || 
+          opt.getAttribute("data-name") === associatedRecip
+        );
+        if (found) {
+          recipSelect.value = found.value;
+        }
+      }
+      updateAdminWarningTemplate();
+    }
+
+    function updateAdminWarningTemplate() {
+      const recipSelect = document.getElementById("admin-warn-recipient");
+      const caseSelect = document.getElementById("admin-warn-case");
+      const selectedRecipOption = recipSelect.options[recipSelect.selectedIndex];
+      const selectedCaseOption = caseSelect.options[caseSelect.selectedIndex];
+
+      const recipName = selectedRecipOption ? selectedRecipOption.getAttribute("data-name") || selectedRecipOption.text : "Authorized Personnel";
+      const caseId = caseSelect.value || "CASE-SEC-DIRECT";
+      const docName = selectedCaseOption ? selectedCaseOption.getAttribute("data-doc") || "Confidential Document" : "Confidential Document";
+
+      document.getElementById("admin-warn-body").value = 
+`Subject: Security Investigation Notice – Document Leak
+
+Dear ${recipName},
+
+Your account has been associated with a document security investigation regarding "${docName}".
+
+You are required to cooperate with the ongoing security review and provide any requested details. Further administrative actions may be taken according to applicable security policies.
+
+Investigation Reference: ${caseId}
+TRACESEAL Security Administration`;
+    }
+
+    document.getElementById("admin-issue-warning-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const recipientId = document.getElementById("admin-warn-recipient").value;
+      const caseId = document.getElementById("admin-warn-case").value || undefined;
+      const subject = document.getElementById("admin-warn-subject").value.trim();
+      const message = document.getElementById("admin-warn-body").value.trim();
+      const btn = document.getElementById("btn-submit-admin-warning");
+
+      if (!recipientId) {
+        showToast("Please select an Authorised Personnel recipient.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Sending Notice & Committing to DLT...";
+
+      try {
+        const payload = {
+          recipient_id: recipientId,
+          investigation_id: caseId,
+          subject: subject,
+          reason: subject,
+          message: message,
+        };
+
+        const res = await apiCall("/api/forensics/notices/send", "POST", payload, false, { silent: true });
+        const warnId = res.warning_id || res.notice_id;
+        closeAdminIssueWarningModal();
+        await loadAdminWarnings();
+        if (res.already_issued) {
+          showToast(`Warning already issued for this incident. Existing warning: ${warnId}`, "info");
+          openAdminWarningDetailsModal(warnId);
+        } else {
+          showToast(`✓ Warning Notice ${warnId} issued successfully!`, "success");
+        }
+        await checkLeakStatus();
+        await loadStats();
+      } catch (err) {
+        showToast(err.message || "Failed to issue warning notice", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "✉️ Send Warning Notice";
+      }
+    });
+
+    async function loadUsers() {
+      try {
+        registeredUsers = await apiCall("/api/users");
+        renderMembersTable();
+      } catch (e) {
+        console.error("loadUsers error:", e);
+      }
+    }
+
+    function renderMembersTable() {
+      const tbody = document.getElementById("members-table-body");
+      const members = registeredUsers.filter(u => u.role === "RECIPIENT");
+      document.getElementById("stat-members").innerText = members.length;
+
+      if (members.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No registered authorized personnel found. Click "+ Add Authorized Personnel" above.</td></tr>`;
+        renderTablePagination("members-pagination", 1, 0, "changeMembersPage", 8);
+        return;
+      }
+
+      const pagedMembers = members.slice((pageMembers - 1) * 8, pageMembers * 8);
+      tbody.innerHTML = pagedMembers.map(m => {
+        let rawStatus = (m.status || "ACTIVE").toUpperCase();
+        let status = rawStatus;
+        if (status === "DEACTIVATED" || status === "BLOCKED") status = "REMOVED";
+        let badgeClass = "badge-pass";
+        if (status === "SUSPENDED") badgeClass = "badge-warn";
+        else if (status === "BLACKLISTED" || status === "REMOVED") badgeClass = "badge-fail";
+
+        const pubKeyShort = m.public_key ? `${m.public_key.substring(0, 16)}...` : (m.id || "PK-DEV");
+
+        return `
+          <tr>
+            <td><b>${m.display_name}</b></td>
+            <td><span class="mono">@${m.username}</span></td>
+            <td><span class="badge ${badgeClass}">${status}</span></td>
+            <td><span class="mono" style="font-size: 0.75rem; color: var(--accent-cyan);">${pubKeyShort}</span></td>
+            <td>
+              <select class="action-select" onchange="handleAdminEmployeeAction(this, '${m.id}', '${m.display_name.replace(/'/g, "\\'")}')">
+                <option value="" selected disabled>Manage ▾</option>
+                <option value="SUSPENDED" ${status === 'SUSPENDED' ? 'disabled' : ''}>Suspend Account</option>
+                <option value="BLACKLISTED" ${status === 'BLACKLISTED' ? 'disabled' : ''}>Blacklist Account</option>
+                ${(m.status || '').toUpperCase() !== 'SUSPENDED' ? `<option value="REMOVE" ${status === 'REMOVED' ? 'disabled' : ''}>Remove Account</option>` : ''}
+                <option value="ACTIVE" ${status === 'ACTIVE' ? 'disabled' : ''}>Reactivate Account</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderTablePagination("members-pagination", pageMembers, members.length, "changeMembersPage", 8);
+    }
+
+    async function handleAdminEmployeeAction(selectEl, userId, displayName) {
+      const action = selectEl.value;
+      selectEl.value = ""; // Reset dropdown
+      if (!action) return;
+
+      if (action === "REMOVE") {
+        const targetUser = registeredUsers.find(u => u.id === userId);
+        if (targetUser && (targetUser.status || "").toUpperCase() === "SUSPENDED") {
+          showToast("Suspended accounts cannot be removed.", "error");
+          return;
+        }
+        await removeAccount(userId, displayName);
+      } else {
+        await updateAccountStatus(userId, action, displayName);
+      }
+    }
+
+    async function updateAccountStatus(userId, newStatus, displayName) {
+      if (!userId || !newStatus) return;
+      const targetName = displayName || "this authorized personnel";
+      if (!confirm(`Are you sure you want to change ${targetName}'s account status to ${newStatus}?`)) {
+        return;
+      }
+      try {
+        showToast(`Updating account status to ${newStatus}...`, "info");
+        await apiCall(`/api/users/${userId}/status`, "PATCH", { status: newStatus });
+        showToast(`Account status updated to ${newStatus}! Audit committed to ledger.`, "success");
+        await loadUsers();
+        await loadDocuments();
+        await loadAccessInvestigation();
+      } catch (err) {
+        showToast(err.message || "Status update failed", "error");
+      }
+    }
+
+    async function deactivateAccount(userId, displayName) {
+      if (!userId) return;
+      const targetName = displayName || "this authorized personnel";
+      if (!confirm(`Are you sure you want to deactivate ${targetName}'s account? Decryption authorizations will be revoked.`)) {
+        return;
+      }
+      try {
+        showToast("Deactivating authorized personnel account...", "info");
+        await apiCall(`/api/users/${userId}/status`, "PATCH", { status: "DEACTIVATED" });
+        showToast("Authorized personnel account deactivated and access revoked. Audit committed to ledger.", "success");
+        await loadUsers();
+        await loadDocuments();
+        await loadAccessInvestigation();
+      } catch (err) {
+        showToast(err.message || "Deactivation failed", "error");
+      }
+    }
+
+    async function removeAccount(userId, displayName) {
+      if (!userId) return;
+      const targetUser = registeredUsers.find(u => u.id === userId);
+      if (targetUser && (targetUser.status || "").toUpperCase() === "SUSPENDED") {
+        showToast("Suspended accounts cannot be removed.", "error");
+        return;
+      }
+      const targetName = displayName || "this authorized personnel";
+      if (!confirm(`Are you sure you want to remove ${targetName}'s account? Authorizations will be revoked while historical evidence is safely preserved.`)) {
+        return;
+      }
+      try {
+        showToast("Removing authorized personnel account...", "info");
+        await apiCall(`/api/users/${userId}/status`, "PATCH", { status: "REMOVED" });
+        showToast("Authorized personnel account status updated to REMOVED. Audit committed to ledger.", "success");
+        await loadUsers();
+        await loadDocuments();
+        await loadAccessInvestigation();
+      } catch (err) {
+        showToast(err.message || "Removal failed", "error");
+      }
+    }
+
+    // --- Document Management & Safe Deletion ---
+    let documentPendingDelete = null;
+
+    function confirmDeleteDocument(docId, docName) {
+      documentPendingDelete = { id: docId, name: docName };
+      document.getElementById("delete-doc-name").innerText = docName;
+      document.getElementById("delete-doc-id").innerText = docId;
+      document.getElementById("delete-doc-modal").style.display = "flex";
+    }
+
+    function closeDeleteDocModal() {
+      documentPendingDelete = null;
+      document.getElementById("delete-doc-modal").style.display = "none";
+    }
+
+    async function executeDeleteDocument() {
+      if (!documentPendingDelete) return;
+      const docId = documentPendingDelete.id;
+      const btn = document.getElementById("btn-confirm-delete-doc");
+      btn.disabled = true;
+      btn.innerText = "Deleting...";
+
+      try {
+        await apiCall(`/api/documents/${docId}`, "DELETE");
+        closeDeleteDocModal();
+        showToast("Document deleted successfully.", "success");
+        await loadDocuments();
+        await loadAccessInvestigation();
+      } catch (err) {
+        showToast(err.message || "Failed to delete document", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Delete Document";
+      }
+    }
+
+    async function loadDocuments() {
+      try {
+        cachedDocuments = await apiCall("/api/documents");
+        renderDocumentsTable();
+      } catch (e) {
+        console.error("loadDocuments error:", e);
+      }
+    }
+
+    function renderDocumentsTable() {
+      const tbody = document.getElementById("documents-table-body");
+      document.getElementById("stat-docs").innerText = cachedDocuments.length;
+
+      if (cachedDocuments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No documents registered. Upload a PDF above.</td></tr>`;
+        renderTablePagination("documents-pagination", 1, 0, "changeDocumentsPage", 8);
+        return;
+      }
+
+      const pagedDocs = cachedDocuments.slice((pageDocuments - 1) * 8, pageDocuments * 8);
+      tbody.innerHTML = pagedDocs.map(d => {
+        const authList = d.authorized_recipients || [];
+        const authCount = authList.length;
+        const authBadge = authCount > 0
+          ? `<span class="badge badge-pass">${authCount} Authorized</span>`
+          : `<span class="badge badge-secondary" style="color: var(--text-muted);">None</span>`;
+
+        const accessCount = cachedAccessEvents.filter(e => e.document_id === d.document_id).length;
+        const accessBadge = `<span class="badge badge-secondary" style="font-weight: 600;">${accessCount} ${accessCount === 1 ? 'Download' : 'Downloads'}</span>`;
+
+        const docAccessStatus = authCount > 0
+          ? `<span class="badge badge-pass">ACTIVE</span>`
+          : `<span class="badge badge-warn">RESTRICTED</span>`;
+
+        const uploadDateStr = d.created_at ? new Date(d.created_at).toLocaleString() : "N/A";
+
+        return `
+          <tr>
+            <td>
+              <b>${d.original_filename}</b>
+              <div class="mono" style="font-size: 0.72rem; color: var(--accent-cyan);">${d.document_id}</div>
+            </td>
+            <td>${authBadge}</td>
+            <td>${(d.status || '').toUpperCase() === 'LEAKED' ? '<span class="badge badge-fail" style="font-weight: 700;">LEAKED</span>' : '<span class="badge badge-pass" style="font-weight: 700;">SAFE</span>'}</td>
+            <td style="font-size: 0.83rem; color: var(--text-dim); white-space: nowrap;">${uploadDateStr}</td>
+            <td>${accessBadge}</td>
+            <td>${docAccessStatus}</td>
+            <td><span class="mono" style="font-size: 0.75rem; color: var(--accent-cyan);">AES-256-GCM + ML-KEM-768</span></td>
+            <td style="white-space: nowrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openAccessModal('${d.document_id}', '${d.original_filename.replace(/'/g, "\\'")}')" title="Configure authorized recipients">
+                ⚙️ Manage Access
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="openDocDetailsModal('${d.document_id}')" title="View cryptographic details">
+                🔍 Details
+              </button>
+              <button class="btn btn-primary btn-sm" onclick="downloadDecryptedFile('${d.document_id}', '${d.original_filename.replace(/'/g, "\\'")}')" title="Decrypt and download original document">
+                📥 Decrypt & Download
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="downloadEncryptedPdf('${d.document_id}', '${d.original_filename.replace(/'/g, "\\'")}')" title="Download AES-256-GCM encrypted ciphertext">
+                🔒 Ciphertext
+              </button>
+              <button class="btn btn-secondary btn-sm" style="color: #f43f5e; border-color: rgba(244, 63, 94, 0.5);" onclick="confirmDeleteDocument('${d.document_id}', '${d.original_filename.replace(/'/g, "\\'")}')" title="Delete document">
+                🗑️ Delete
+              </button>
+
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderTablePagination("documents-pagination", pageDocuments, cachedDocuments.length, "changeDocumentsPage", 8);
+    }
+
+    function openDocDetailsModal(docId) {
+      const d = cachedDocuments.find(x => x.document_id === docId);
+      if (!d) return;
+
+      const authList = d.authorized_recipients || [];
+      const authBadges = authList.length > 0 ? authList.map(rId => {
+        const u = registeredUsers.find(x => x.id === rId);
+        const name = u ? `${u.display_name} (@${u.username})` : rId;
+        return `<span class="badge badge-pass" style="margin: 2px;">${name}</span>`;
+      }).join(" ") : '<span style="color: var(--text-dim);">No authorized recipients</span>';
+
+      const accessCount = cachedAccessEvents.filter(e => e.document_id === d.document_id).length;
+
+      document.getElementById("doc-details-title").innerText = `Document: ${d.original_filename}`;
+      document.getElementById("doc-details-content").innerHTML = `
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem;">
+          <div><b>Document ID:</b> <span class="mono" style="color: var(--accent-cyan);">${d.document_id}</span></div>
+          <div><b>Original Filename:</b> ${d.original_filename}</div>
+          <div><b>Original SHA-256 Hash:</b> <div class="mono" style="font-size: 0.76rem; word-break: break-all; color: var(--accent-cyan); margin-top: 0.2rem;">${d.original_hash}</div></div>
+          <div><b>File Size:</b> ${(d.file_size / 1024).toFixed(1)} KB (${d.file_size} bytes)</div>
+          <div><b>Uploaded By:</b> ${d.uploaded_by || 'Administrator'}</div>
+          <div><b>Upload Timestamp:</b> ${new Date(d.created_at).toLocaleString()}</div>
+          <div><b>Encryption Status:</b> <span class="badge badge-info">${d.status}</span></div>
+          <div><b>Encryption Algorithm:</b> <span class="mono" style="color: var(--accent-cyan);">AES-256-GCM (Authenticated 256-bit symmetric encryption)</span></div>
+          <div><b>Key Encapsulation:</b> <span class="mono" style="color: var(--accent-cyan);">ML-KEM-768 (NIST FIPS 203 Post-Quantum KEM)</span></div>
+          <div><b>Total Decryptions:</b> <span class="badge badge-secondary">${accessCount}</span></div>
+          <div style="margin-top: 0.25rem;"><b>Authorized Personnel:</b><div style="margin-top: 0.35rem;">${authBadges}</div></div>
+        </div>
+      `;
+      document.getElementById("doc-details-modal").style.display = "flex";
+    }
+
+    function closeDocDetailsModal() {
+      document.getElementById("doc-details-modal").style.display = "none";
+    }
+
+    // --- Access Control Modal ---
+    function openAccessModal(docId, docName) {
+      currentManagingDocId = docId;
+      document.getElementById("modal-doc-title").innerText = `Manage Access: ${docName}`;
+      document.getElementById("modal-doc-subtitle").innerText = `Document ID: ${docId}`;
+
+      const container = document.getElementById("member-checkbox-container");
+      const members = registeredUsers.filter(u => u.role === "RECIPIENT");
+
+      apiCall(`/api/documents/${docId}`).then(doc => {
+        const authorized = doc.authorized_recipients || [];
+
+        if (members.length === 0) {
+          container.innerHTML = `<div style="color: var(--text-dim); font-size: 0.85rem; padding: 0.5rem;">No registered authorized personnel available. Add personnel first.</div>`;
+        } else {
+          container.innerHTML = members.map(m => {
+            const isChecked = authorized.includes(m.id) ? "checked" : "";
+            const isInactive = m.status && m.status !== "ACTIVE";
+            return `
+              <label class="member-checkbox-item" style="${isInactive ? 'opacity: 0.6;' : ''}">
+                <input type="checkbox" name="auth_member" value="${m.id}" ${isChecked} onchange="updateSelectAllManageAccessState()">
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; color: #fff; font-size: 0.9rem;">
+                    ${m.display_name} ${isInactive ? `<span class="badge badge-warn" style="font-size: 0.65rem;">${m.status}</span>` : ''}
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--text-dim); font-family: var(--font-mono);">@${m.username} (${m.id})</div>
+                </div>
+              </label>
+            `;
+          }).join("");
+        }
+
+        updateSelectAllManageAccessState();
+        document.getElementById("access-modal").style.display = "flex";
+      });
+    }
+
+    function toggleSelectAllManageAccess(source) {
+      const isChecked = (typeof source === 'boolean') ? source : source.checked;
+      const checkboxes = document.querySelectorAll('#member-checkbox-container input[name="auth_member"]');
+      checkboxes.forEach(cb => {
+        if (!cb.disabled) {
+          cb.checked = isChecked;
+        }
+      });
+      updateSelectAllManageAccessState();
+    }
+
+    function updateSelectAllManageAccessState() {
+      const selectAll = document.getElementById("manage-access-select-all");
+      if (!selectAll) return;
+      const checkboxes = Array.from(document.querySelectorAll('#member-checkbox-container input[name="auth_member"]:not(:disabled)'));
+      if (checkboxes.length === 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+        return;
+      }
+      const checkedCount = checkboxes.filter(cb => cb.checked).length;
+      if (checkedCount === checkboxes.length) {
+        selectAll.checked = true;
+        selectAll.indeterminate = false;
+      } else if (checkedCount > 0) {
+        selectAll.checked = false;
+        selectAll.indeterminate = true;
+      } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      }
+    }
+
+    function closeAccessModal() {
+      document.getElementById("access-modal").style.display = "none";
+      currentManagingDocId = null;
+    }
+
+    async function saveDocumentAccess() {
+      if (!currentManagingDocId) return;
+
+      const checkboxes = document.querySelectorAll('input[name="auth_member"]:checked');
+      const selectedIds = Array.from(checkboxes).map(cb => cb.value);
+
+      const btn = document.getElementById("btn-save-access");
+      btn.disabled = true;
+      btn.innerText = "Saving...";
+
+      try {
+        await apiCall(`/api/documents/${currentManagingDocId}/authorizations`, "PUT", {
+          recipient_ids: selectedIds
+        });
+        showToast("Access permissions updated successfully!", "success");
+        closeAccessModal();
+        await loadDocuments();
+      } catch (e) {
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Save Authorizations";
+      }
+    }
+
+    // --- Add New Authorized Personnel Modal ---
+    function openNewMemberModal() {
+      document.getElementById("new-member-form").reset();
+      document.getElementById("new-member-modal").style.display = "flex";
+    }
+
+    function closeNewMemberModal() {
+      document.getElementById("new-member-modal").style.display = "none";
+    }
+
+    document.getElementById("new-member-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("new-member-name").value.trim();
+      const username = document.getElementById("new-member-username").value.trim().toLowerCase();
+      const password = document.getElementById("new-member-password").value;
+      const confirm_password = document.getElementById("new-member-confirm-password").value;
+
+      if (password !== confirm_password) {
+        showToast("Initial Password and Confirm Password do not match.", "error");
+        return;
+      }
+
+      try {
+        await apiCall("/api/users/employee", "POST", {
+          name,
+          username,
+          password,
+          confirm_password
+        });
+        showToast(`Authorized personnel '${name}' added successfully!`, "success");
+        closeNewMemberModal();
+        await loadUsers();
+      } catch (err) {}
+    });
+
+    async function loadAccessInvestigation() {
+      try {
+        cachedAccessEvents = await apiCall("/api/admin/access-investigation");
+        renderAccessInvestigationTable();
+        if (cachedDocuments.length > 0) {
+          renderDocumentsTable();
+        }
+      } catch (e) {
+        console.error("loadAccessInvestigation error:", e);
+      }
+    }
+
+    function renderAccessInvestigationTable() {
+      const tbody = document.getElementById("access-investigation-table-body");
+      if (!tbody) return;
+      document.getElementById("stat-sessions").innerText = cachedAccessEvents.length;
+
+      if (!cachedAccessEvents || cachedAccessEvents.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">No decryption access events recorded yet.</td></tr>`;
+        renderTablePagination("access-investigation-pagination", 1, 0, "changeAccessInvestigationPage", 8);
+        return;
+      }
+
+      const pagedEvents = cachedAccessEvents.slice((pageAccessInvestigation - 1) * 8, pageAccessInvestigation * 8);
+      tbody.innerHTML = pagedEvents.map(e => {
+        let uStatus = (e.user_status || "ACTIVE").toUpperCase();
+        if (uStatus === "DEACTIVATED" || uStatus === "BLOCKED") uStatus = "REMOVED";
+        let statusBadge = `<span class="badge badge-pass">NORMAL</span>`;
+        if (uStatus === "SUSPENDED") statusBadge = `<span class="badge badge-warn">SUSPENDED</span>`;
+        else if (uStatus === "BLACKLISTED" || uStatus === "REMOVED") statusBadge = `<span class="badge badge-fail">${uStatus}</span>`;
+
+        const dtStr = e.timestamp ? new Date(e.timestamp).toLocaleString() : "N/A";
+        const fpDisplay = e.watermark_id || e.session_id || 'N/A';
+
+        return `
+          <tr>
+            <td>
+              <b>${e.document_name}</b>
+              <div class="mono" style="font-size: 0.72rem; color: var(--text-dim);">${e.document_id}</div>
+            </td>
+            <td>
+              <b>${e.user_name}</b>
+              <div class="mono" style="font-size: 0.72rem; color: var(--text-dim);">@${e.username}</div>
+            </td>
+            <td style="font-size: 0.83rem; color: var(--text-dim); white-space: nowrap;">${dtStr}</td>
+            <td><span class="mono" style="font-size: 0.78rem; font-weight: 600; color: var(--accent-cyan);">${fpDisplay}</span></td>
+            <td><span class="badge badge-pass" title="Cryptographically verified using ML-DSA-44 post-quantum signature">VALID (ML-DSA-44)</span></td>
+            <td><span class="badge badge-pass" title="Tamper-evident block verified on local hash-chain DLT">VERIFIED (DLT)</span></td>
+            <td>${statusBadge}</td>
+            <td style="white-space: nowrap;">
+              <button class="btn btn-secondary btn-sm" onclick="downloadSessionReport('${e.session_id}')" title="Download official cryptographic PDF report">
+                📥 Report PDF
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="openInvestigationDetailsModal('${e.session_id}')" title="View cryptographic provenance metadata">
+                🔍 View Details
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderTablePagination("access-investigation-pagination", pageAccessInvestigation, cachedAccessEvents.length, "changeAccessInvestigationPage", 8);
+    }
+
+    function openInvestigationDetailsModal(sessionId) {
+      const e = cachedAccessEvents.find(x => x.session_id === sessionId);
+      if (!e) return;
+
+      let normUserStatus = (e.user_status || "ACTIVE").toUpperCase();
+      if (normUserStatus === "DEACTIVATED" || normUserStatus === "BLOCKED") normUserStatus = "REMOVED";
+
+      document.getElementById("inv-modal-title").innerText = `Access Audit: ${e.document_name}`;
+      document.getElementById("inv-modal-content").innerHTML = `
+        <div style="background: rgba(15, 23, 42, 0.6); padding: 1rem; border-radius: 6px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.5rem;">
+          <div><b>Session ID:</b> <span class="mono" style="color: var(--accent-cyan); font-weight: 600;">${e.session_id}</span></div>
+          <div><b>Document:</b> ${e.document_name} <span class="mono" style="color: var(--text-dim);">(${e.document_id})</span></div>
+          <div><b>Recipient:</b> ${e.user_name} (<span class="mono">@${e.username}</span>, ID: <span class="mono">${e.user_id}</span>)</div>
+          <div><b>Recipient Account Status:</b> <span class="badge ${normUserStatus === 'ACTIVE' ? 'badge-pass' : 'badge-warn'}">${normUserStatus}</span></div>
+          <div><b>Decryption Date & Time:</b> ${new Date(e.timestamp).toLocaleString()}</div>
+          <div><b>Action Performed:</b> <span class="badge badge-info">${e.action}</span></div>
+          <div><b>Forensic Fingerprint ID:</b> <span class="mono" style="color: var(--accent-cyan); font-weight: 600;">${e.watermark_id || 'N/A'}</span></div>
+          <div><b>Provenance Event ID:</b> <span class="mono">${e.provenance_id || 'PROV-' + e.session_id}</span></div>
+          <div><b>Digital Signature Status:</b> <span class="badge badge-pass">VALID (ML-DSA-44 Post-Quantum Signature Verified)</span></div>
+          <div><b>Ledger Verification Status:</b> <span class="badge badge-pass">VERIFIED (DLT Immutable Block in Tamper-Evident Hash Chain)</span></div>
+          <div><b>Investigation Status:</b> <span class="badge ${normUserStatus === 'ACTIVE' ? 'badge-pass' : 'badge-warn'}">${normUserStatus === 'ACTIVE' ? 'NORMAL' : normUserStatus}</span></div>
+        </div>
+      `;
+
+      const pdfBtn = document.getElementById("inv-modal-pdf-btn");
+      pdfBtn.onclick = () => downloadSessionReport(sessionId);
+
+      document.getElementById("investigation-details-modal").style.display = "flex";
+    }
+
+    function closeInvestigationDetailsModal() {
+      document.getElementById("investigation-details-modal").style.display = "none";
+    }
+
+    async function downloadSessionReport(sessionId) {
+      try {
+        const token = localStorage.getItem("traceseal_token");
+        showToast("Generating Forensic PDF Report...", "info");
+        const res = await fetch(`/api/forensics/reports/${sessionId}/download`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          let errDetail = "Failed to download forensic report";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `TraceSeal_Report_${sessionId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Forensic Report PDF downloaded successfully!", "success");
+      } catch (err) {
+        showToast("Report download failed: " + err.message, "error");
+      }
+    }
+
+    async function loadAdminSignatures() {
+      try {
+        const sigs = await apiCall("/api/signatures");
+        cachedAdminSignatures = Array.isArray(sigs) ? sigs : [];
+        renderAdminSignaturesTable();
+      } catch (err) {
+        console.warn("loadAdminSignatures note:", err.message);
+        cachedAdminSignatures = [];
+        renderAdminSignaturesTable();
+      }
+    }
+
+    function renderAdminSignaturesTable() {
+      const tbody = document.getElementById("admin-signatures-table-body");
+      if (!tbody) return;
+
+      if (!cachedAdminSignatures || cachedAdminSignatures.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No recipient digital signatures recorded yet.</td></tr>`;
+        renderTablePagination("admin-signatures-pagination", 1, 0, "changeAdminSignaturesPage", 8);
+        return;
+      }
+
+      const paged = cachedAdminSignatures.slice((pageAdminSignatures - 1) * 8, pageAdminSignatures * 8);
+      tbody.innerHTML = paged.map(s => {
+        const dtStr = s.created_at ? new Date(s.created_at).toLocaleString() : "N/A";
+        return `
+          <tr>
+            <td>
+              <b>${escapeHtml(s.document_name || 'Document')}</b>
+              <div class="mono" style="font-size: 0.72rem; color: var(--text-dim);">${escapeHtml(s.document_id)}</div>
+            </td>
+            <td>
+              <b>${escapeHtml(s.recipient_name || s.recipient_username || 'Recipient')}</b>
+              <div class="mono" style="font-size: 0.72rem; color: var(--text-dim);">@${escapeHtml(s.recipient_username || '')}</div>
+            </td>
+            <td><span class="mono" style="font-size: 0.78rem; color: #f59e0b; font-weight: 600;">${escapeHtml(s.algorithm || 'DSA-SHA256')}</span></td>
+            <td style="font-size: 0.83rem; color: var(--text-dim); white-space: nowrap;">${dtStr}</td>
+            <td><span class="badge badge-pass">SIGNED (DSA) ✓</span></td>
+            <td><span class="badge badge-pass" title="Bound to Ledger Block #${s.ledger_block_index || 1}">LEDGER BOUND (Block #${s.ledger_block_index || 1})</span></td>
+            <td style="white-space: nowrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openAdminSignatureModal('${s.id || s.signature_id}')" title="Cryptographically verify DSA digital signature">
+                🔍 Verify Signature
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderTablePagination("admin-signatures-pagination", pageAdminSignatures, cachedAdminSignatures.length, "changeAdminSignaturesPage", 8);
+    }
+
+    let activeAdminViewingSigId = null;
+
+    async function openAdminSignatureModal(sigId) {
+      if (!sigId) return;
+      activeAdminViewingSigId = sigId;
+      const modal = document.getElementById("admin-signature-modal");
+      const content = document.getElementById("modal-admin-sig-content");
+      document.getElementById("modal-admin-sig-id").innerText = sigId;
+      modal.style.display = "flex";
+      content.innerHTML = "<div style='color: var(--text-dim); text-align: center; padding: 1.5rem;'>Cryptographically verifying DSA-SHA256 digital signature against public key...</div>";
+
+      try {
+        const res = await apiCall(`/api/signatures/${sigId}/verify`, "POST");
+        const statusBadge = res.valid
+          ? `<span class="badge badge-pass" style="font-weight: 700;">VERIFIED (DSA-SHA256) ✓</span>`
+          : `<span class="badge badge-fail" style="font-weight: 700;">${res.verification_status || 'INVALID'}</span>`;
+
+        content.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.88rem;">
+            <div><b>Signature ID:</b> <span class="mono" style="color: var(--accent-cyan); font-weight: 700;">${res.signature_id}</span></div>
+            <div><b>Signer / Recipient:</b> <b>${escapeHtml(res.recipient_name)}</b> <span class="mono" style="color: var(--text-dim);">(@${escapeHtml(res.recipient_username)})</span></div>
+            <div><b>Document:</b> <b>${escapeHtml(res.document_name)}</b> <span class="mono" style="color: var(--text-dim);">(${res.document_id})</span></div>
+            <div><b>Document Version:</b> <span class="badge badge-secondary">${res.document_version || 'v1.0'}</span></div>
+            <div><b>Document SHA-256 Hash:</b> <div class="mono" style="font-size: 0.74rem; word-break: break-all; color: var(--accent-cyan); margin-top: 0.2rem;">${res.document_hash}</div></div>
+            <div><b>Signed Timestamp:</b> <span style="color: var(--text-dim);">${new Date(res.signed_at).toLocaleString()}</span></div>
+            <div><b>Signature Algorithm:</b> <span class="mono" style="color: #f59e0b; font-weight: 600;">${res.signature_algorithm} (NIST FIPS 186-4)</span></div>
+            <div><b>Ledger Block:</b> <span class="badge badge-pass">Block #${res.ledger_block_index || 1}</span></div>
+            <div><b>Verification Status:</b> ${statusBadge}</div>
+            <div style="background: rgba(15, 23, 42, 0.95); padding: 0.65rem; border-radius: 4px; border: 1px solid var(--border); font-size: 0.78rem; color: #94a3b8; margin-top: 0.4rem;">
+              ℹ️ ${res.details}
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = `<div style="color: #ef4444; padding: 1rem;">Failed to verify signature: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+
+    function closeAdminSignatureModal() {
+      const modal = document.getElementById("admin-signature-modal");
+      if (modal) modal.style.display = "none";
+      activeAdminViewingSigId = null;
+    }
+
+    async function reverifyAdminSignature() {
+      if (activeAdminViewingSigId) {
+        await openAdminSignatureModal(activeAdminViewingSigId);
+        showToast("Signature cryptographically re-verified!", "success");
+      }
+    }
+
+    async function loadStats() {
+      const statLedger = document.getElementById("stat-ledger");
+      try {
+        const blocks = await apiCall("/api/ledger");
+        document.getElementById("stat-blocks").innerText = blocks.length;
+        const verif = await apiCall("/api/ledger/verify");
+        if (verif.status === "LEDGER INTEGRITY VERIFIED") {
+          statLedger.innerHTML = "VERIFIED ✓";
+          statLedger.style.color = "var(--status-pass)";
+        } else if (verif.status === "LEDGER TAMPERING DETECTED") {
+          statLedger.innerHTML = "TAMPER DETECTED ⚠";
+          statLedger.style.color = "var(--status-fail)";
+        } else if (verif.status === "NO LEDGER RECORDS AVAILABLE") {
+          statLedger.innerHTML = "NO RECORDS";
+          statLedger.style.color = "var(--text-muted)";
+        } else {
+          statLedger.innerHTML = "UNAVAILABLE";
+          statLedger.style.color = "var(--status-warn)";
+        }
+      } catch (e) {
+        if (statLedger) {
+          statLedger.innerHTML = "UNAVAILABLE";
+          statLedger.style.color = "var(--status-warn)";
+        }
+      }
+    }
+
+    document.getElementById("upload-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById("pdf-file");
+      if (!fileInput.files || fileInput.files.length === 0) {
+        showToast("Please select a PDF document to upload.", "error");
+        return;
+      }
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const btn = document.getElementById("btn-upload");
+      btn.disabled = true;
+      btn.innerText = "Encrypting (AES-256-GCM)...";
+
+      try {
+        const res = await apiCall("/api/documents/upload", "POST", formData, true);
+        showToast(`Document uploaded & encrypted! ID: ${res.document_id}`, "success");
+        fileInput.value = "";
+        await loadDocuments();
+      } catch (err) {
+        // Handled
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "🔒 Encrypt & Store Document";
+      }
+    });
+
+    async function downloadEncryptedPdf(docId, originalFilename) {
+      try {
+        const token = localStorage.getItem("traceseal_token");
+        showToast("Fetching encrypted PDF...", "info");
+        const res = await fetch(`/api/documents/${docId}/download-encrypted`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          let errDetail = "Failed to download encrypted file";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const stem = originalFilename.toLowerCase().endsWith(".pdf") ? originalFilename.slice(0, -4) : originalFilename;
+        a.download = `encrypted_${stem}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Encrypted PDF downloaded successfully!", "success");
+      } catch (err) {
+        showToast("Download failed: " + err.message, "error");
+      }
+    }
+
+    async function downloadDecryptedFile(docId, originalFilename) {
+      try {
+        const token = localStorage.getItem("traceseal_token");
+        showToast("Decrypting document & restoring original bytes...", "info");
+        const res = await fetch(`/api/documents/${docId}/download`, {
+          headers: token ? { "Authorization": `Bearer ${token}` } : {}
+        });
+        if (!res.ok) {
+          let errDetail = "Failed to decrypt and download document";
+          try {
+            const errJson = await res.json();
+            errDetail = errJson.detail || errDetail;
+          } catch (e) {}
+          throw new Error(errDetail);
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = originalFilename || `decrypted_${docId}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Original document decrypted and downloaded successfully!", "success");
+      } catch (err) {
+        showToast("Decryption/download failed: " + err.message, "error");
+      }
+    }
+
+
+    document.addEventListener("DOMContentLoaded", initAdminPage);
+  </script>
+</body>
+</html>

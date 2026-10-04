@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACESEAL — Secure Role-Based Authentication</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TRACESEAL">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <span>TRACESEAL</span>
+    </div>
+    <div class="nav-links">
+      <a href="/">Overview</a>
+      <a href="/login" class="active">Sign In</a>
+    </div>
+  </nav>
+
+  <main class="container" style="display: flex; align-items: center; justify-content: center; min-height: 80vh; padding: 2rem 1rem;">
+    
+    <!-- STEP 1: Role-Based Account Selection (Expandable Accordion) -->
+    <div id="view-role-selection" class="card" style="width: 100%; max-width: 620px; padding: 2.5rem 2rem;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="width: 52px; height: 52px; margin: 0 auto 1.25rem; background: rgba(6, 182, 212, 0.12); border: 1px solid rgba(6, 182, 212, 0.35); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </div>
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff; letter-spacing: 0.05em; margin-bottom: 0.25rem;">
+          TRACESEAL
+        </h1>
+        <div style="font-size: 0.95rem; font-weight: 600; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem;">
+          Secure Document System
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Select your account type to view registered users
+        </p>
+      </div>
+
+      <div id="role-selection-alert" style="display: none; padding: 0.85rem 1.25rem; margin: 0 auto 1.5rem; max-width: 580px; border-radius: 8px; font-size: 0.88rem; line-height: 1.4; text-align: center; font-weight: 600;"></div>
+
+      <div class="role-accordion-container">
+        <!-- 1. ADMINISTRATOR ROLE GROUP -->
+        <div class="role-group" id="group-admin">
+          <button type="button" class="role-group-header" onclick="toggleRoleGroup('ADMIN')">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <div class="role-select-icon role-icon-admin" style="margin: 0; width: 36px; height: 36px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #fff; font-size: 1rem;">Administrator</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Manage documents, authorizations & system users</div>
+              </div>
+            </div>
+            <span class="role-group-chevron" id="chevron-admin">›</span>
+          </button>
+          <div class="role-users-panel" id="panel-admin">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+              Select Administrator Account
+            </div>
+            <div class="account-grid" id="grid-admin">
+              <div style="color: var(--text-dim); font-size: 0.85rem;">Loading administrators...</div>
+            </div>
+            <div id="grid-admin-pagination"></div>
+          </div>
+        </div>
+
+        <!-- 2. INVESTIGATOR ROLE GROUP -->
+        <div class="role-group" id="group-investigator">
+          <button type="button" class="role-group-header" onclick="toggleRoleGroup('INVESTIGATOR')">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <div class="role-select-icon role-icon-investigator" style="margin: 0; width: 36px; height: 36px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #fff; font-size: 1rem;">Investigator</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Forensic leak attribution, issue warnings & cryptographic audit</div>
+              </div>
+            </div>
+            <span class="role-group-chevron" id="chevron-investigator">›</span>
+          </button>
+          <div class="role-users-panel" id="panel-investigator">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+              Select Investigator Account
+            </div>
+            <div class="account-grid" id="grid-investigator">
+              <div style="color: var(--text-dim); font-size: 0.85rem;">Loading investigators...</div>
+            </div>
+            <div id="grid-investigator-pagination"></div>
+          </div>
+        </div>
+
+        <!-- 3. AUTHORISED PERSONNEL ROLE GROUP -->
+        <div class="role-group" id="group-employee">
+          <button type="button" class="role-group-header" onclick="toggleRoleGroup('EMPLOYEE')">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+              <div class="role-select-icon role-icon-employee" style="margin: 0; width: 36px; height: 36px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div>
+                <div style="font-weight: 700; color: #fff; font-size: 1rem;">Authorised Personnel</div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Authorized document access & secure decryption</div>
+              </div>
+            </div>
+            <span class="role-group-chevron" id="chevron-employee">›</span>
+          </button>
+          <div class="role-users-panel" id="panel-employee">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem;">
+              Select Authorised Personnel Account
+            </div>
+            <div class="account-grid" id="grid-employee">
+              <div style="color: var(--text-dim); font-size: 0.85rem;">Loading authorised personnel...</div>
+            </div>
+            <div id="grid-employee-pagination"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Password Authentication Form Screen -->
+    <div id="view-login-form" class="card" style="width: 100%; max-width: 460px; padding: 2.25rem 2rem; display: none;">
+      <button type="button" class="back-to-roles-btn" onclick="showRoleSelection()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        ← Back to Account Selection
+      </button>
+
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <h2 id="form-role-title" style="font-size: 1.35rem; font-weight: 800; color: #fff; letter-spacing: 0.04em;">
+          ACCOUNT LOGIN
+        </h2>
+        <p id="form-role-subtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+          Enter password for the selected account
+        </p>
+      </div>
+
+      <!-- Pre-populated Account Banner -->
+      <div class="prefilled-user-banner">
+        <div class="prefilled-avatar" id="avatar-initials">U</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 700; color: #fff; font-size: 0.95rem;" id="selected-display-name">
+            User Name
+          </div>
+          <div style="font-size: 0.78rem; color: var(--text-dim); font-family: var(--font-mono);">
+            Username: <span id="selected-username-label" style="color: var(--accent-cyan); font-weight: 600;">@username</span>
+          </div>
+        </div>
+        <span class="badge badge-pass" id="selected-status-badge">Active</span>
+      </div>
+
+      <div id="login-error-alert" style="display: none; padding: 0.85rem 1rem; margin-bottom: 1.25rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-size: 0.82rem; line-height: 1.4;">
+      </div>
+
+      <form id="role-login-form" autocomplete="off">
+        <!-- Hidden user ID to uniquely identify exact selected record -->
+        <input type="hidden" id="input-user-id" value="">
+
+        <div class="form-group">
+          <label class="form-label" for="input-username">Selected Account Username</label>
+          <div style="position: relative;">
+            <input type="text" id="input-username" class="form-input" readonly autocomplete="username" style="background: rgba(15, 23, 42, 0.65); color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 600; cursor: not-allowed; border-color: rgba(6, 182, 212, 0.35); padding-right: 5rem;" required>
+            <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; font-weight: 700; color: var(--accent-cyan); background: rgba(6, 182, 212, 0.15); padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em;">LOCKED</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-password">Account Password</label>
+          <input type="password" id="input-password" class="form-input" placeholder="Enter account password" autocomplete="new-password" required>
+        </div>
+        
+        <button type="submit" id="btn-submit-login" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; padding: 0.75rem; font-weight: 700; letter-spacing: 0.05em;">
+          LOGIN
+        </button>
+      </form>
+
+      <!-- Demo credentials helper -->
+      <div class="demo-credentials-box" id="demo-credentials-hint">
+        <span>Password hint:</span> <code id="demo-pwd-hint">password123</code>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>TRACESEAL — Cryptographically Verifiable Document Leak Attribution</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+  <script>
+    let allDirectoryUsers = [];
+    let selectedUser = null;
+    let selectedRole = null;
+    let pageAdmin = 1;
+    let pageInvestigator = 1;
+    let pageEmployee = 1;
+
+    function changeAdminPage(p) {
+      pageAdmin = p;
+      renderRoleGrids();
+    }
+
+    function changeInvestigatorPage(p) {
+      pageInvestigator = p;
+      renderRoleGrids();
+    }
+
+    function changeEmployeePage(p) {
+      pageEmployee = p;
+      renderRoleGrids();
+    }
+
+    async function loadDirectory() {
+      try {
+        const res = await apiCall("/api/auth/directory");
+        allDirectoryUsers = res || [];
+        renderRoleGrids();
+      } catch (e) {
+        console.error("Directory load failed:", e);
+      }
+    }
+
+    function renderRoleGrids() {
+      // 1. Admins
+      const admins = allDirectoryUsers.filter(u => u.role === "ADMIN");
+      const gridAdmin = document.getElementById("grid-admin");
+      if (gridAdmin) {
+        const pagedAdmins = admins.slice((pageAdmin - 1) * 8, pageAdmin * 8);
+        gridAdmin.innerHTML = pagedAdmins.map(u => createAccountCard(u, "ADMIN")).join("");
+        renderTablePagination("grid-admin-pagination", pageAdmin, admins.length, "changeAdminPage", 8);
+      }
+
+      // 2. Investigators
+      const investigators = allDirectoryUsers.filter(u => u.role === "INVESTIGATOR");
+      const gridInv = document.getElementById("grid-investigator");
+      if (gridInv) {
+        const pagedInvestigators = investigators.slice((pageInvestigator - 1) * 8, pageInvestigator * 8);
+        gridInv.innerHTML = pagedInvestigators.map(u => createAccountCard(u, "INVESTIGATOR")).join("");
+        renderTablePagination("grid-investigator-pagination", pageInvestigator, investigators.length, "changeInvestigatorPage", 8);
+      }
+
+      // 3. Authorized Personnel
+      const employees = allDirectoryUsers.filter(u => u.role === "RECIPIENT");
+      const gridEmp = document.getElementById("grid-employee");
+      if (gridEmp) {
+        const pagedEmployees = employees.slice((pageEmployee - 1) * 8, pageEmployee * 8);
+        gridEmp.innerHTML = pagedEmployees.map(u => createAccountCard(u, "EMPLOYEE")).join("");
+        renderTablePagination("grid-employee-pagination", pageEmployee, employees.length, "changeEmployeePage", 8);
+      }
+    }
+
+    function createAccountCard(user, roleCategory) {
+      const status = (user.status || "ACTIVE").toUpperCase();
+      const statusClass = `status-${status.toLowerCase()}`;
+      const badgeClass = status === "ACTIVE" ? "badge-pass" : "badge-fail";
+      const statusBadge = `<span class="badge ${badgeClass}" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">${status}</span>`;
+
+      return `
+        <div class="account-card-item ${statusClass}" onclick="selectAccount('${user.id}', '${roleCategory}')">
+          <div>
+            <div class="account-card-name">${user.display_name}</div>
+            <div class="account-card-user">@${user.username}</div>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+            ${statusBadge}
+            <span style="color: var(--accent-cyan); font-size: 0.85rem;">→</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleRoleGroup(roleCategory) {
+      const groupMap = {
+        ADMIN: "group-admin",
+        INVESTIGATOR: "group-investigator",
+        EMPLOYEE: "group-employee"
+      };
+
+      const targetGroupId = groupMap[roleCategory];
+      const targetGroup = document.getElementById(targetGroupId);
+      if (!targetGroup) return;
+      const isAlreadyExpanded = targetGroup.classList.contains("expanded");
+
+      // Collapse all
+      document.querySelectorAll(".role-group").forEach(g => g.classList.remove("expanded"));
+
+      // Expand clicked group if it wasn't already expanded
+      if (!isAlreadyExpanded) {
+        targetGroup.classList.add("expanded");
+      }
+    }
+
+    function updateLoginButtonState(user) {
+      const btn = document.getElementById("btn-submit-login");
+      const statusBadge = document.getElementById("selected-status-badge");
+      const errorAlert = document.getElementById("login-error-alert");
+      if (!btn) return;
+
+      if (!user) {
+        btn.disabled = false;
+        btn.removeAttribute("disabled");
+        btn.innerText = "LOGIN";
+        btn.style.cursor = "pointer";
+        btn.title = "";
+        return;
+      }
+
+      const rawStatus = (user.status || "ACTIVE").toUpperCase();
+      const isBlocked = (rawStatus === "SUSPENDED" || rawStatus === "BLACKLISTED");
+
+      if (statusBadge) {
+        statusBadge.innerText = rawStatus;
+        statusBadge.className = `badge ${rawStatus === "ACTIVE" ? "badge-pass" : "badge-fail"}`;
+      }
+
+      if (isBlocked) {
+        btn.disabled = true;
+        btn.setAttribute("disabled", "disabled");
+        btn.innerText = "LOGIN";
+        btn.style.cursor = "not-allowed";
+        btn.title = rawStatus === "SUSPENDED" ? "Account is SUSPENDED. Login is disabled." : "Account is BLACKLISTED. Access is denied.";
+
+        if (errorAlert) {
+          if (rawStatus === "SUSPENDED") {
+            errorAlert.innerHTML = `<strong>⚠️ ACCOUNT SUSPENDED</strong><br>Your account is currently suspended. Login access is disabled.`;
+          } else {
+            errorAlert.innerHTML = `<strong>⛔ ACCOUNT BLACKLISTED</strong><br>Your account has been blacklisted and access is denied.`;
+          }
+          errorAlert.style.display = "block";
+          errorAlert.style.background = "rgba(239, 68, 68, 0.12)";
+          errorAlert.style.border = "1px solid rgba(239, 68, 68, 0.4)";
+          errorAlert.style.color = "#fca5a5";
+        }
+      } else {
+        btn.disabled = false;
+        btn.removeAttribute("disabled");
+        btn.innerText = "LOGIN";
+        btn.style.cursor = "pointer";
+        btn.title = "";
+
+        if (errorAlert && !errorAlert.dataset.keepError) {
+          errorAlert.style.display = "none";
+          errorAlert.innerHTML = "";
+        }
+      }
+    }
+
+    async function selectAccount(userId, roleCategory) {
+      const user = allDirectoryUsers.find(u => u.id === userId);
+      if (!user) {
+        showToast("Account not found in system directory.", "error");
+        return;
+      }
+
+      // Explicitly clear any lingering toast / welcome state
+      if (typeof clearWelcomeMessages === "function") clearWelcomeMessages();
+      const roleAlert = document.getElementById("role-selection-alert");
+      if (roleAlert) { roleAlert.style.display = "none"; roleAlert.innerHTML = ""; }
+
+      // Explicitly reset form and errors to clear any stale state
+      document.getElementById("role-login-form").reset();
+      const errorAlert = document.getElementById("login-error-alert");
+      if (errorAlert) {
+        errorAlert.style.display = "none";
+        errorAlert.innerHTML = "";
+        delete errorAlert.dataset.keepError;
+      }
+
+      selectedUser = user;
+      selectedRole = roleCategory;
+
+      // Populate Step 2 Login Form
+      const roleTitles = {
+        ADMIN: "ADMINISTRATOR LOGIN",
+        INVESTIGATOR: "INVESTIGATOR LOGIN",
+        EMPLOYEE: "AUTHORISED PERSONNEL LOGIN"
+      };
+
+      document.getElementById("form-role-title").innerText = roleTitles[roleCategory] || "ACCOUNT LOGIN";
+      document.getElementById("selected-display-name").innerText = user.display_name;
+      document.getElementById("selected-username-label").innerText = `@${user.username}`;
+      document.getElementById("input-user-id").value = user.id;
+      document.getElementById("input-username").value = user.username;
+      document.getElementById("input-password").value = "";
+
+      // Initials Avatar
+      const initials = (user.display_name || user.username).substring(0, 2).toUpperCase();
+      document.getElementById("avatar-initials").innerText = initials;
+
+      // Password hint
+      let pwdHint = "password123";
+      if (user.username === "admin" || user.username === "sysadmin") {
+        pwdHint = "admin123";
+      } else if (user.username === "inv001" || user.username === "inv002" || user.username === "inv003") {
+        pwdHint = "inv123";
+      } else if (user.username.startsWith("investigator")) {
+        pwdHint = "investigator123";
+      } else {
+        pwdHint = `${user.username}123`;
+      }
+      document.getElementById("demo-pwd-hint").innerText = pwdHint;
+
+      // Update button & status badge immediately based on account status
+      updateLoginButtonState(user);
+
+      // Show login form view
+      document.getElementById("view-role-selection").style.display = "none";
+      document.getElementById("view-login-form").style.display = "block";
+
+      const pwdInput = document.getElementById("input-password");
+      if ((user.status || "ACTIVE").toUpperCase() === "ACTIVE") {
+        setTimeout(() => pwdInput.focus(), 150);
+      }
+
+      // Check fresh status from backend directory in case account status changed in database
+      try {
+        const freshUsers = await apiCall("/api/auth/directory");
+        if (Array.isArray(freshUsers)) {
+          allDirectoryUsers = freshUsers;
+          const freshUser = allDirectoryUsers.find(u => u.id === userId);
+          if (freshUser && selectedUser && selectedUser.id === userId) {
+            selectedUser = freshUser;
+            updateLoginButtonState(freshUser);
+          }
+        }
+      } catch (e) {
+        // Fallback silently if network or offline
+      }
+    }
+
+    let lastAccountStatusNotice = null;
+
+    function showRoleSelection(statusNotice = null) {
+      if (typeof clearWelcomeMessages === "function") clearWelcomeMessages();
+      selectedUser = null;
+      selectedRole = null;
+      document.getElementById("role-login-form").reset();
+      document.getElementById("input-user-id").value = "";
+      document.getElementById("input-username").value = "";
+      document.getElementById("input-password").value = "";
+      const errorAlert = document.getElementById("login-error-alert");
+      if (errorAlert) {
+        errorAlert.style.display = "none";
+        errorAlert.innerHTML = "";
+        delete errorAlert.dataset.keepError;
+      }
+      updateLoginButtonState(null);
+
+      const notice = statusNotice || lastAccountStatusNotice;
+      const roleAlert = document.getElementById("role-selection-alert");
+      if (roleAlert) {
+        if (notice) {
+          roleAlert.innerHTML = notice;
+          roleAlert.style.display = "block";
+          roleAlert.style.background = "rgba(239, 68, 68, 0.15)";
+          roleAlert.style.border = "1px solid rgba(239, 68, 68, 0.45)";
+          roleAlert.style.color = "#fca5a5";
+        } else {
+          roleAlert.style.display = "none";
+          roleAlert.innerHTML = "";
+        }
+      }
+
+      document.getElementById("view-role-selection").style.display = "block";
+      document.getElementById("view-login-form").style.display = "none";
+      loadDirectory();
+    }
+
+    // Block Enter key submission in password field if account is SUSPENDED or BLACKLISTED
+    document.getElementById("input-password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const userStatus = (selectedUser ? (selectedUser.status || "") : "").toUpperCase();
+        const btn = document.getElementById("btn-submit-login");
+        if (userStatus === "SUSPENDED" || userStatus === "BLACKLISTED" || (btn && btn.disabled)) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }
+    });
+
+    document.getElementById("role-login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const userStatus = (selectedUser ? (selectedUser.status || "") : "").toUpperCase();
+      const btn = document.getElementById("btn-submit-login");
+      const errorAlert = document.getElementById("login-error-alert");
+
+      // Strictly prevent login form submission if account is SUSPENDED or BLACKLISTED
+      if (userStatus === "SUSPENDED" || userStatus === "BLACKLISTED" || (btn && btn.disabled)) {
+        updateLoginButtonState(selectedUser);
+        return false;
+      }
+      
+      // Ensure canonical username without display '@' prefix or whitespace
+      const rawUsername = (selectedUser ? (selectedUser.username || selectedUser.name) : document.getElementById("input-username").value) || "";
+      const canonicalUsername = String(rawUsername).trim().replace(/^@+/, "").trim();
+      const canonicalUserId = selectedUser ? selectedUser.id : (document.getElementById("input-user-id").value || "").trim();
+      const password = document.getElementById("input-password").value;
+      const role = selectedRole === "EMPLOYEE" ? "RECIPIENT" : (selectedRole || (selectedUser ? selectedUser.role : null));
+
+      errorAlert.style.display = "none";
+      btn.disabled = true;
+      btn.innerText = "AUTHENTICATING...";
+
+      try {
+        const payload = {
+          username: canonicalUsername,
+          password: password,
+          required_role: role,
+          user_id: canonicalUserId || undefined
+        };
+
+        const data = await apiCall("/api/auth/login", "POST", payload);
+
+        if (data && data.access_token) {
+          lastAccountStatusNotice = null;
+          const roleAlert = document.getElementById("role-selection-alert");
+          if (roleAlert) { roleAlert.style.display = "none"; roleAlert.innerHTML = ""; }
+
+          setAuth(data.access_token, data.user);
+          showToast(`Welcome back, ${data.user.display_name}!`, "success");
+
+          setTimeout(() => {
+            if (data.user.role === "ADMIN") {
+              window.location.href = "/admin";
+            } else if (data.user.role === "INVESTIGATOR") {
+              window.location.href = "/investigator";
+            } else if (data.user.role === "RECIPIENT") {
+              window.location.href = "/recipient";
+            } else {
+              window.location.href = "/";
+            }
+          }, 350);
+        }
+      } catch (err) {
+        // ALWAYS clear any stale success / welcome back state immediately
+        if (typeof clearWelcomeMessages === "function") clearWelcomeMessages();
+        if (typeof clearAllToasts === "function") clearAllToasts();
+
+        const errMsg = err.message || "Authentication failed.";
+        const isBlacklisted = errMsg.toUpperCase().includes("BLACKLIST") || (selectedUser && (selectedUser.status || "").toUpperCase() === "BLACKLISTED");
+        const isSuspended = errMsg.toUpperCase().includes("SUSPEND") || (selectedUser && (selectedUser.status || "").toUpperCase() === "SUSPENDED");
+
+        if (isBlacklisted) {
+          if (selectedUser) selectedUser.status = "BLACKLISTED";
+          errorAlert.dataset.keepError = "1";
+          const blacklistedDetail = "Your account has been blacklisted and access is denied.";
+          errorAlert.innerHTML = `<strong>⛔ ACCOUNT BLACKLISTED</strong><br>${blacklistedDetail}`;
+          errorAlert.style.display = "block";
+          lastAccountStatusNotice = `⛔ <strong>ACCOUNT BLACKLISTED:</strong> Account @${canonicalUsername} has been blacklisted and access is denied.`;
+          showToast(blacklistedDetail, "error");
+          updateLoginButtonState(selectedUser);
+        } else if (isSuspended) {
+          if (selectedUser) selectedUser.status = "SUSPENDED";
+          errorAlert.dataset.keepError = "1";
+          const suspendedDetail = "Your account is currently suspended. Please contact the administrator.";
+          errorAlert.innerHTML = `<strong>⚠️ ACCOUNT SUSPENDED</strong><br>${suspendedDetail}`;
+          errorAlert.style.display = "block";
+          lastAccountStatusNotice = `⚠️ <strong>ACCOUNT SUSPENDED:</strong> Account @${canonicalUsername} is suspended.`;
+          showToast(suspendedDetail, "error");
+          updateLoginButtonState(selectedUser);
+        } else {
+          lastAccountStatusNotice = null;
+          errorAlert.innerText = errMsg;
+          errorAlert.style.display = "block";
+          showToast(errMsg, "error");
+          updateLoginButtonState(selectedUser);
+        }
+      } finally {
+        updateLoginButtonState(selectedUser);
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Clear any prior local session token and stale welcome/success messages
+      localStorage.removeItem("traceseal_token");
+      localStorage.removeItem("traceseal_user");
+      if (typeof clearAllToasts === "function") clearAllToasts();
+      if (typeof clearWelcomeMessages === "function") clearWelcomeMessages();
+      loadDirectory();
+      // Expand group according to role query parameter or default to EMPLOYEE
+      const urlParams = new URLSearchParams(window.location.search);
+      const roleParam = (urlParams.get("role") || "").toUpperCase();
+      if (roleParam === "INVESTIGATOR" || roleParam === "AUTHORISED_PERSON") {
+        toggleRoleGroup("INVESTIGATOR");
+      } else if (roleParam === "ADMIN") {
+        toggleRoleGroup("ADMIN");
+      } else {
+        toggleRoleGroup("EMPLOYEE");
+      }
+    });
+  </script>
+</body>
+</html>

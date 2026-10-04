@@ -1,0 +1,47 @@
+# TraceSeal — .gitignore
+# Excludes runtime-generated files and bulk binary storage from git
+# The repo stays lean while preserving all essential demo data
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+# (keep .env.example)
+
+# Scratch/dev scripts (not needed in deployment)
+scratch/
+
+# ── Storage: exclude bulk binary files ──────────────────────────────────────
+# Encrypted document files (101 MB, up to 27 MB per file — too large for git)
+storage/encrypted/
+
+# Decrypted session copies (128 MB, generated on demand)
+storage/decrypted/
+
+# Leaked investigation files — exclude all except the 3 essential demo PDFs
+storage/leaked/*
+!storage/leaked/
+!storage/leaked/CASE-85954C76_Confidential_fingerprinted_SES-61A5CCEC.pdf
+!storage/leaked/CASE-19E0996D_FRONTEND_web_based_fingerprinted_SES-836B32F5.pdf
+!storage/leaked/CASE-78313396_Classified_Notice_Test_fingerprinted_SES-8F342050.pdf
+# Forensic evidence PDF reports (1.5 MB, generated on demand)
+storage/evidence/
+
+# Tamper simulation backup (runtime artifact)
+ledger_data/tamper_backup.json
+
+# OS artifacts
+.DS_Store
+Thumbs.db

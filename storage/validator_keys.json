@@ -1,0 +1,20 @@
+{
+  "node-alpha": {
+    "node_id": "node-alpha",
+    "role": "LEAD_PROPOSER",
+    "public_key": "e2785052be0deb2e503ae171d1e4fb2938e2c17e43e14bd07c6a4369539701d1",
+    "private_key": "092dfb8893bc4f43472c5ef6cdf49f2f49a91bc28cde9658a2b1e2fcc8b7e92e"
+  },
+  "node-bravo": {
+    "node_id": "node-bravo",
+    "role": "ENDORSER_VALIDATOR",
+    "public_key": "3ccfbbc3891bdf864602ba3fa8cb8c3d061dc223b62dc812a109b8e79e8a0bb4",
+    "private_key": "a150d5df1f75c19795a5711fc3d141615e3b40077b1dfd3be0cf83819cf3afe1"
+  },
+  "node-charlie": {
+    "node_id": "node-charlie",
+    "role": "AUDITOR_VALIDATOR",
+    "public_key": "4ddf63a611e4a4579faf36ec607903d69017467a1401fe0e69bb107a78b97bb8",
+    "private_key": "8d72c78685e4e76e584c8e4135f5a0bf7878cb9a3ed2580e5fcc3a2ae6b8362c"
+  }
+}

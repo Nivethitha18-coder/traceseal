@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACESEAL — Offline Tamper-Evident Ledger</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TRACESEAL">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <span>TRACESEAL</span>
+    </div>
+    <div class="nav-links">
+      <a href="/">Overview</a>
+      <a href="/admin">Admin Dashboard</a>
+      <a href="/recipient">Authorized Personnel Dashboard</a>
+      <a href="/investigator">Leak Investigation</a>
+      <a href="/ledger-view" class="active">Ledger Integrity</a>
+      <div id="nav-user-info"></div>
+    </div>
+  </nav>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; font-weight: 800; color: #fff;">Offline Tamper-Evident Provenance Ledger</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Permissioned local distributed ledger technology (DLT). Sequential SHA-256 hash chains guarantee mathematical immutability without public blockchain or cloud reliance.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-primary" onclick="verifyLedgerAction(true)" id="btn-verify-ledger">
+          🛡️ Verify Ledger Integrity
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Ledger Verification Status Banner -->
+    <div id="verification-banner-container">
+      <div class="ledger-banner ledger-banner-verified" id="default-loading-banner">
+        <div class="ledger-banner-header">
+          <span class="ledger-badge-verified">VERIFYING LOCAL HASH CHAIN...</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+          Auditing local hash links and recalculating sequential block hashes...
+        </p>
+      </div>
+    </div>
+
+    <!-- Ledger Status Overview: Exactly 4 Essential Fields -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 2rem;">
+      <div class="stat-card">
+        <div class="stat-label">Chain Status</div>
+        <div class="stat-val" id="ledger-status-text" style="color: var(--status-pass); font-size: 1.15rem; margin-top: 0.35rem;">
+          VERIFYING...
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Blocks</div>
+        <div class="stat-val" id="stat-total-blocks">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Latest Block</div>
+        <div class="stat-val mono" id="stat-latest-block">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cryptographic Engine</div>
+        <div style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-top: 0.5rem;">
+          SHA-256 + ML-DSA-44
+        </div>
+      </div>
+    </div>
+
+    <!-- Controlled Demo: Tampering Simulation Bar -->
+    <div class="card" style="margin-bottom: 2rem; border-color: rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.04);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 800; letter-spacing: 0.05em;">
+            CONTROLLED PRESENTATION DEMO
+          </span>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-top: 0.4rem;">
+            Tamper Detection Demonstration
+          </h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; max-width: 650px;">
+            Simulate an adversary modifying a block in the local ledger database. Re-running verification recalculates the SHA-256 chain and catches the hash mismatch.
+          </p>
+        </div>
+        <div id="demo-status-pill">
+          <span class="badge badge-pass" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+            ● Ledger Intact (No Simulation)
+          </span>
+        </div>
+      </div>
+
+      <!-- Clean Step Sequence: [ Select Target Block ] [ Simulate Tampering ] [ Verify Ledger ] [ Restore Ledger ] -->
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(11, 18, 34, 0.7); padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #fbbf24; text-transform: uppercase;">Step 1</span>
+          <select id="select-target-block" class="form-select" style="width: auto; min-width: 170px; padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+            <option value="1">Block #1</option>
+          </select>
+        </div>
+
+        <div style="color: var(--text-dim); font-size: 0.9rem;">➔</div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #fbbf24; text-transform: uppercase;">Step 2</span>
+          <button class="btn btn-danger btn-sm" onclick="simulateTamperingAction()" id="btn-simulate-tamper">
+            ⚠️ Simulate Tampering
+          </button>
+        </div>
+
+        <div style="color: var(--text-dim); font-size: 0.9rem;">➔</div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #fbbf24; text-transform: uppercase;">Step 3</span>
+          <button class="btn btn-primary btn-sm" onclick="verifyLedgerAction(true)" id="btn-verify-demo">
+            🛡️ Verify Ledger
+          </button>
+        </div>
+
+        <div style="color: var(--text-dim); font-size: 0.9rem;">➔</div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 0.75rem; font-weight: 700; color: #fbbf24; text-transform: uppercase;">Step 4</span>
+          <button class="btn btn-secondary btn-sm" onclick="restoreLedgerAction()" id="btn-restore-ledger">
+            🔄 Restore Ledger
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Immutable Block Explorer Table: Exactly 5 Columns + Action -->
+    <div class="card">
+      <div class="card-title">
+        <span>Sequential Block Explorer</span>
+        <button class="btn btn-secondary btn-sm" onclick="loadLedger()">Refresh</button>
+      </div>
+      <p class="card-desc">
+        Each block cryptographically seals previous block hash, event payload, and post-quantum digital signature.
+      </p>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Block</th>
+              <th>Event</th>
+              <th>Watermark ID</th>
+              <th>Timestamp</th>
+              <th>Status</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="blocks-table-body">
+            <tr><td colspan="6" style="text-align: center;">Loading ledger blocks...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="blocks-pagination"></div>
+    </div>
+  </main>
+
+  <!-- Block Details Modal -->
+  <div id="block-details-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content" style="max-width: 660px; width: 95%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff;" id="modal-block-title">
+          Block Details
+        </h3>
+        <button onclick="closeBlockDetailsModal()" style="background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+
+      <div id="modal-block-body">
+        <!-- Dynamically populated -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary btn-sm" onclick="closeBlockDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script>
+    let currentTamperedBlockIndex = null;
+    let cachedBlocks = [];
+    let pageBlocks = 1;
+
+    function changeBlocksPage(p) {
+      pageBlocks = p;
+      renderBlocksTable();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatDateTime(isoString) {
+      if (!isoString) return "N/A";
+      try {
+        const d = new Date(isoString);
+        if (isNaN(d.getTime())) return isoString;
+        return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+      } catch (e) {
+        return isoString;
+      }
+    }
+
+    async function initLedgerPage() {
+      await loadLedger();
+      await verifyLedgerAction(false);
+    }
+
+    async function loadLedger() {
+      try {
+        const blocks = await apiCall("/api/ledger");
+        cachedBlocks = blocks || [];
+        document.getElementById("stat-total-blocks").innerText = cachedBlocks.length;
+        document.getElementById("stat-latest-block").innerText = cachedBlocks.length > 0 
+          ? `Block #${cachedBlocks[cachedBlocks.length - 1].block_index}` 
+          : "None";
+
+        // Populate Target Block selector dropdown
+        populateTargetBlockSelector(cachedBlocks);
+
+        renderBlocksTable();
+      } catch (e) {
+        document.getElementById("blocks-table-body").innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Unable to load ledger blocks from local storage.</td></tr>`;
+      }
+    }
+
+    function renderBlocksTable() {
+      const tbody = document.getElementById("blocks-table-body");
+      if (!tbody) return;
+
+      if (!cachedBlocks || cachedBlocks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">The ledger contains no entries.</td></tr>`;
+        renderTablePagination("blocks-pagination", 1, 0, "changeBlocksPage", 8);
+        return;
+      }
+
+      const paged = cachedBlocks.slice((pageBlocks - 1) * 8, pageBlocks * 8);
+      tbody.innerHTML = paged.map(b => {
+        const isGenesis = b.block_index === 0;
+        const isTampered = currentTamperedBlockIndex !== null && b.block_index === currentTamperedBlockIndex;
+        const rowClass = isTampered ? 'ledger-row-tampered' : '';
+        const statusBadge = isTampered 
+          ? `<span class="badge badge-fail" style="font-weight: 800;">HASH MISMATCH ⚠</span>`
+          : `<span class="badge badge-pass">VERIFIED</span>`;
+
+        let isWarning = false;
+        let warnId = "";
+        try {
+          const txs = typeof b.transactions === "string" ? JSON.parse(b.transactions) : b.transactions;
+          if (Array.isArray(txs) && txs.length > 0 && txs[0].type === "WARNING_ISSUED") {
+            isWarning = true;
+            warnId = txs[0].warning_id || "";
+          }
+        } catch(e) {}
+        if (!isWarning && (b.watermark_id === "WARNING_ISSUED" || (b.event_id && b.event_id.startsWith("EVT-WARN-")))) {
+          isWarning = true;
+        }
+
+        const wmBadge = isWarning
+          ? `<span class="badge badge-warn mono" style="font-weight: 700;">WARNING_ISSUED</span>${warnId ? `<div class="mono" style="font-size: 0.72rem; color: #fbbf24; margin-top: 2px;">${escapeHtml(warnId)}</div>` : ''}`
+          : `<span class="badge ${isGenesis ? 'badge-info' : 'badge-pass'} mono">${escapeHtml(b.watermark_id || 'GENESIS')}</span>`;
+
+        return `
+          <tr class="${rowClass}">
+            <td class="mono"><b>Block #${b.block_index}</b></td>
+            <td class="mono">${escapeHtml(b.event_id || 'EVT-GENESIS-0000')}</td>
+            <td>${wmBadge}</td>
+            <td style="font-size: 0.8rem;">${formatDateTime(b.timestamp)}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm" onclick="openBlockDetailsModal(${b.block_index})">
+                🔍 View Details
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderTablePagination("blocks-pagination", pageBlocks, cachedBlocks.length, "changeBlocksPage", 8);
+    }
+
+    function populateTargetBlockSelector(blocks) {
+      const select = document.getElementById("select-target-block");
+      if (!select) return;
+      const prevVal = select.value;
+      select.innerHTML = "";
+
+      if (!blocks || blocks.length === 0) {
+        select.innerHTML = `<option value="0">Genesis (Block #0)</option>`;
+        return;
+      }
+
+      // Add selectable blocks
+      blocks.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b.block_index;
+        opt.innerText = b.block_index === 0 
+          ? `Block #0 (Genesis)` 
+          : `Block #${b.block_index} (${b.event_id ? b.event_id.substring(0, 14) : 'EVT'})`;
+        select.appendChild(opt);
+      });
+
+      // Maintain selection or default to Block #1 if available, otherwise #0
+      if (prevVal && select.querySelector(`option[value="${prevVal}"]`)) {
+        select.value = prevVal;
+      } else if (blocks.length > 1) {
+        select.value = "1";
+      } else {
+        select.value = "0";
+      }
+    }
+
+    function renderVerificationUI(data) {
+      const bannerContainer = document.getElementById("verification-banner-container");
+      const statusText = document.getElementById("ledger-status-text");
+      const status = data.status;
+      const demoPill = document.getElementById("demo-status-pill");
+
+      currentTamperedBlockIndex = (status === "LEDGER TAMPERING DETECTED") ? data.tampered_block_index : null;
+
+      // Update Top Status Stat Card (Clean 4 essential items)
+      if (status === "LEDGER INTEGRITY VERIFIED") {
+        statusText.innerText = "INTACT ✓";
+        statusText.style.color = "var(--status-pass)";
+        if (demoPill) {
+          demoPill.innerHTML = `<span class="badge badge-pass" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">● Ledger Intact (No Simulation)</span>`;
+        }
+      } else if (status === "LEDGER TAMPERING DETECTED") {
+        statusText.innerText = "HASH MISMATCH ⚠";
+        statusText.style.color = "var(--status-fail)";
+        if (demoPill) {
+          demoPill.innerHTML = `<span class="badge badge-fail" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; font-weight: 800;">● Simulation Active: Block #${data.tampered_block_index} Modified</span>`;
+        }
+      } else if (status === "LEDGER VERIFICATION UNAVAILABLE") {
+        statusText.innerText = "UNAVAILABLE";
+        statusText.style.color = "var(--status-warn)";
+        if (demoPill) {
+          demoPill.innerHTML = `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; font-size: 0.8rem; padding: 0.4rem 0.8rem;">● Unavailable</span>`;
+        }
+      } else if (status === "NO LEDGER RECORDS AVAILABLE") {
+        statusText.innerText = "EMPTY";
+        statusText.style.color = "var(--text-muted)";
+      } else {
+        statusText.innerText = status || "UNKNOWN";
+        statusText.style.color = "var(--text-muted)";
+      }
+
+      // 1. NORMAL LEDGER STATE: LEDGER INTEGRITY VERIFIED
+      if (status === "LEDGER INTEGRITY VERIFIED") {
+        bannerContainer.innerHTML = `
+          <div class="ledger-banner ledger-banner-verified">
+            <div class="ledger-banner-header">
+              <span class="ledger-badge-verified">✅ LEDGER INTEGRITY VERIFIED</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Verified at: ${formatDateTime(data.verification_timestamp)}</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #34d399; margin: 0.35rem 0;">
+              Ledger Integrity Verified
+            </h2>
+            <p style="color: #ecfdf5; font-size: 0.9rem; margin: 0;">
+              All sequential SHA-256 hash links and cryptographic event hashes recalculate identically across the entire offline chain.
+            </p>
+          </div>
+        `;
+      }
+      // 2. TAMPER DETECTION: LEDGER TAMPERING DETECTED (Strictly 6 essential fields)
+      else if (status === "LEDGER TAMPERING DETECTED") {
+        bannerContainer.innerHTML = `
+          <div class="ledger-banner ledger-banner-tampered">
+            <div class="ledger-banner-header">
+              <span class="ledger-badge-tampered">⚠ LEDGER TAMPERING DETECTED</span>
+              <span style="font-size: 0.8rem; color: #fca5a5;">Chain Audit Discrepancy Found</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #ef4444; margin: 0.35rem 0 1rem 0;">
+              Ledger Tampering Detected
+            </h2>
+
+            <!-- Clean, uncluttered 6-field discrepancy view -->
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 1.25rem;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                  <div style="font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: 600;">Affected Block Number</div>
+                  <div style="font-size: 1rem; font-weight: 700; color: #fff; margin-top: 0.25rem;">
+                    Block #${data.tampered_block_index !== null ? data.tampered_block_index : 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: 600;">Affected Event ID</div>
+                  <div class="mono" style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-top: 0.25rem;">
+                    ${escapeHtml(data.affected_entry_id || data.event_id || 'N/A')}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: 600;">Verification Timestamp</div>
+                  <div style="font-size: 0.9rem; color: #e2e8f0; margin-top: 0.25rem;">
+                    ${formatDateTime(data.verification_timestamp)}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: #fca5a5; text-transform: uppercase; font-weight: 600;">Chain Status</div>
+                  <div style="font-size: 0.95rem; font-weight: 800; color: #ef4444; margin-top: 0.25rem;">
+                    ${data.chain_status || 'HASH MISMATCH'}
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.75rem;">
+                <div>
+                  <div style="font-size: 0.75rem; color: #4ade80; font-weight: 600; text-transform: uppercase;">Expected Hash</div>
+                  <div class="mono" style="background: #060913; padding: 0.65rem 0.85rem; border-radius: 6px; border: 1px solid rgba(74, 222, 128, 0.4); color: #4ade80; font-size: 0.78rem; word-break: break-all; margin-top: 0.25rem;">
+                    ${escapeHtml(data.expected_hash || 'N/A')}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 0.75rem; color: #f87171; font-weight: 600; text-transform: uppercase;">Stored Hash</div>
+                  <div class="mono" style="background: #060913; padding: 0.65rem 0.85rem; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-size: 0.78rem; word-break: break-all; margin-top: 0.25rem;">
+                    ${escapeHtml(data.stored_hash || 'N/A')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      // 3. CASE: LEDGER VERIFICATION UNAVAILABLE
+      else if (status === "LEDGER VERIFICATION UNAVAILABLE") {
+        bannerContainer.innerHTML = `
+          <div class="ledger-banner ledger-banner-unavailable">
+            <div class="ledger-banner-header">
+              <span class="ledger-badge-unavailable">ℹ LEDGER VERIFICATION UNAVAILABLE</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">${formatDateTime(data.verification_timestamp)}</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #fbbf24; margin: 0.35rem 0;">
+              Ledger Verification Unavailable
+            </h2>
+            <p style="color: #fffbeb; font-size: 0.9rem; margin: 0;">
+              Unable to access the local ledger.
+            </p>
+          </div>
+        `;
+      }
+      // 4. CASE: NO LEDGER RECORDS AVAILABLE
+      else if (status === "NO LEDGER RECORDS AVAILABLE") {
+        bannerContainer.innerHTML = `
+          <div class="ledger-banner ledger-banner-empty">
+            <div class="ledger-banner-header">
+              <span class="ledger-badge-empty">📄 NO LEDGER RECORDS AVAILABLE</span>
+            </div>
+            <h2 style="font-size: 1.25rem; font-weight: 800; color: #cbd5e1; margin: 0.35rem 0;">
+              No Ledger Records Available
+            </h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+              The ledger contains no entries to verify.
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    async function verifyLedgerAction(showToastMsg = true) {
+      try {
+        const res = await apiCall("/api/ledger/verify");
+        renderVerificationUI(res);
+        await loadLedger();
+
+        if (showToastMsg) {
+          if (res.status === "LEDGER INTEGRITY VERIFIED") {
+            showToast("Ledger Integrity Verified: All ledger entries passed hash-chain verification.", "success");
+          } else if (res.status === "LEDGER TAMPERING DETECTED") {
+            showToast(`Ledger Tampering Detected in Block #${res.tampered_block_index}!`, "error");
+          } else if (res.status === "LEDGER VERIFICATION UNAVAILABLE") {
+            showToast("Ledger Verification Unavailable: Unable to access the local ledger.", "warn");
+          } else if (res.status === "NO LEDGER RECORDS AVAILABLE") {
+            showToast("The ledger contains no entries to verify.", "info");
+          }
+        }
+      } catch (err) {
+        // IMPORTANT: OFFLINE DOES NOT MEAN TAMPERING.
+        // Never show "Offline Tamper" or "Cannot Verify".
+        const fallbackData = {
+          valid: false,
+          status: "LEDGER VERIFICATION UNAVAILABLE",
+          total_blocks: 0,
+          tampered_block_index: null,
+          affected_entry_id: null,
+          event_id: null,
+          event_action: null,
+          expected_hash: null,
+          stored_hash: null,
+          verification_timestamp: new Date().toISOString(),
+          chain_status: "UNAVAILABLE",
+          details: "Unable to access the local ledger.",
+          reason: "Unable to access the local ledger."
+        };
+        renderVerificationUI(fallbackData);
+        if (showToastMsg) {
+          showToast("Ledger Verification Unavailable: Unable to access the local ledger.", "error");
+        }
+      }
+    }
+
+    async function simulateTamperingAction() {
+      const select = document.getElementById("select-target-block");
+      const targetIdx = select ? parseInt(select.value, 10) : 1;
+      try {
+        await apiCall("/api/ledger/simulate-tampering", "POST", { block_index: isNaN(targetIdx) ? 1 : targetIdx });
+        showToast(`Target Block #${targetIdx} altered. Running verification...`, "error");
+        await verifyLedgerAction(false);
+      } catch (e) {
+        showToast("Tampering simulation failed to execute.", "error");
+      }
+    }
+
+    async function restoreLedgerAction() {
+      try {
+        await apiCall("/api/ledger/restore", "POST");
+        currentTamperedBlockIndex = null;
+        showToast("Ledger restored to pristine cryptographic state.", "success");
+        await verifyLedgerAction(false);
+      } catch (e) {
+        showToast("Ledger restore failed to execute.", "error");
+      }
+    }
+
+    function openBlockDetailsModal(blockIndex) {
+      const block = cachedBlocks.find(b => b.block_index === blockIndex);
+      if (!block) return;
+
+      document.getElementById("modal-block-title").innerText = `Block #${block.block_index} Cryptographic Details`;
+      const modalBody = document.getElementById("modal-block-body");
+
+      const isGenesis = block.block_index === 0;
+      const isTampered = currentTamperedBlockIndex !== null && block.block_index === currentTamperedBlockIndex;
+      const statusBadge = isTampered
+        ? `<span class="badge badge-fail" style="font-weight: 800;">HASH MISMATCH ⚠</span>`
+        : `<span class="badge badge-pass">VERIFIED INTACT</span>`;
+
+      let isWarning = false;
+      let warnMeta = null;
+      try {
+        const txs = typeof block.transactions === "string" ? JSON.parse(block.transactions) : block.transactions;
+        if (Array.isArray(txs) && txs.length > 0 && txs[0].type === "WARNING_ISSUED") {
+          isWarning = true;
+          warnMeta = txs[0];
+        }
+      } catch(e) {}
+      if (!isWarning && (block.watermark_id === "WARNING_ISSUED" || (block.event_id && block.event_id.startsWith("EVT-WARN-")))) {
+        isWarning = true;
+      }
+
+      modalBody.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          ${isWarning ? `
+          <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35); padding: 0.85rem; border-radius: 6px;">
+            <div style="font-size: 0.75rem; color: #fbbf24; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.04em;">
+              ⚠ Warning Notice Provenance Event Details
+            </div>
+            <div style="font-size: 0.82rem; color: #f1f5f9; display: flex; flex-direction: column; gap: 0.35rem;">
+              <div>• <b>Event Type:</b> <span class="badge badge-warn">WARNING_ISSUED</span></div>
+              <div>• <b>Warning ID:</b> <span class="mono" style="color: #fbbf24; font-weight: 700;">${escapeHtml(warnMeta ? (warnMeta.warning_id || warnMeta.tx_id) : block.event_id.replace('EVT-WARN-', ''))}</span></div>
+              <div>• <b>Issued By:</b> <b>${escapeHtml(warnMeta ? (warnMeta.issuer_username || warnMeta.issuer_id || 'Security Admin') : 'Investigator')}</b> <span class="badge badge-info" style="font-size: 0.68rem;">${escapeHtml(warnMeta ? (warnMeta.issuer_role || 'INVESTIGATOR') : 'INVESTIGATOR')}</span></div>
+              <div>• <b>Issued To:</b> <b>${escapeHtml(warnMeta ? (warnMeta.recipient_name || warnMeta.recipient_username || warnMeta.recipient_id || 'Authorised Personnel') : 'Authorised Personnel')}</b> <span class="badge badge-secondary" style="font-size: 0.68rem;">AUTHORISED PERSONNEL</span></div>
+              <div>• <b>Reason / Subject:</b> <b>${escapeHtml(warnMeta ? (warnMeta.reason || 'Security Warning') : 'Security Notice')}</b></div>
+              ${warnMeta && warnMeta.message ? `<div>• <b>Warning Message:</b> <div style="background: rgba(0,0,0,0.4); padding: 0.5rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.76rem; color: #e2e8f0; margin-top: 0.2rem; white-space: pre-wrap;">${escapeHtml(warnMeta.message)}</div></div>` : ''}
+            </div>
+          </div>
+          ` : ''}
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Full Event ID</div>
+              <div class="mono" style="font-size: 0.85rem; color: #fff; margin-top: 0.25rem;">
+                ${escapeHtml(block.event_id || 'EVT-GENESIS-0000')}
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Full Timestamp</div>
+              <div style="font-size: 0.85rem; color: #fff; margin-top: 0.25rem;">
+                ${formatDateTime(block.timestamp)}
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Watermark ID / Topic</div>
+              <div class="mono" style="font-size: 0.85rem; color: var(--accent-cyan); margin-top: 0.25rem;">
+                ${escapeHtml(block.watermark_id || 'GENESIS')}
+              </div>
+            </div>
+            <div>
+              <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Block Status</div>
+              <div style="margin-top: 0.25rem;">
+                ${statusBadge}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Previous Block Hash (SHA-256)</div>
+            <div class="mono" style="background: #060913; padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid #1e293b; color: #94a3b8; font-size: 0.75rem; word-break: break-all; margin-top: 0.25rem;">
+              ${escapeHtml(block.previous_block_hash)}
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Current Block Hash (SHA-256)</div>
+            <div class="mono" style="background: #060913; padding: 0.6rem 0.8rem; border-radius: 6px; border: 1px solid #1e293b; color: #38bdf8; font-size: 0.75rem; word-break: break-all; margin-top: 0.25rem;">
+              ${escapeHtml(block.current_block_hash)}
+            </div>
+          </div>
+
+          <!-- Cryptographic Verification Details -->
+          <div style="background: rgba(15, 23, 42, 0.6); padding: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.04em;">
+              Cryptographic Verification Details
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.35rem;">
+              <div>• <b>Hash Algorithm:</b> SHA-256 Sequential Block Hash Chain</div>
+              <div>• <b>Signature Scheme:</b> ML-DSA-44 Post-Quantum Digital Signature</div>
+              <div>• <b>Merkle Root:</b> <span class="mono" style="color: #cbd5e1;">${escapeHtml(block.merkle_root || 'N/A (Genesis)')}</span></div>
+              <div>• <b>Consensus:</b> <span style="color: #34d399;">${block.validator_signatures ? '3-Node Byzantine Agreement (node-alpha, node-bravo, node-charlie)' : 'Genesis Seed'}</span></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("block-details-modal").style.display = "flex";
+    }
+
+    function closeBlockDetailsModal() {
+      document.getElementById("block-details-modal").style.display = "none";
+    }
+
+    // Close modal on backdrop click
+    window.addEventListener("click", function(event) {
+      const modal = document.getElementById("block-details-modal");
+      if (event.target === modal) {
+        closeBlockDetailsModal();
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", initLedgerPage);
+  </script>
+</body>
+</html>

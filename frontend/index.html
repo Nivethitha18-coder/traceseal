@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRACESEAL — Cryptographically Verifiable Document Leak Attribution</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06b6d4">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TRACESEAL">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </div>
+      <span>TRACESEAL</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="active">Overview</a>
+      <a href="/admin">Admin Dashboard</a>
+      <a href="/recipient">Authorized Personnel Dashboard</a>
+      <a href="/investigator">Leak Investigation</a>
+      <a href="/ledger-view">Ledger Integrity</a>
+      <div id="nav-user-info"></div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="container">
+    <div class="hero">
+      <div class="hero-tag">SIH PROBLEM STATEMENT SIH26237</div>
+      <h1>Cryptographically Verifiable Document Leak Attribution</h1>
+      <p>
+        Offline-first document provenance architecture. While every authorized recipient receives a visually identical decrypted document, every decryption session embeds an imperceptible cryptographic fingerprint bound to an immutable local hash-chained ledger.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 2.5rem;">
+        <a href="/login" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1rem;">
+          Enter TraceSeal Platform
+        </a>
+        <a href="/investigator" class="btn btn-secondary" style="padding: 0.85rem 1.5rem;">
+          Try Leak Investigation
+        </a>
+      </div>
+    </div>
+
+    <!-- Core Solution Highlights -->
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">
+          <span>Document Encryption</span>
+        </div>
+        <p class="card-desc">
+          Documents are encrypted with unique, cryptographically random keys in a modular local key vault with authenticated integrity protection.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Imperceptible Fingerprint</span>
+        </div>
+        <p class="card-desc">
+          Decryption generates a random session watermark mapped to the recipient, embedded imperceptibly without altering the visible document.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Provenance Signatures</span>
+        </div>
+        <p class="card-desc">
+          Canonical decryption events are digitally signed to guarantee non-repudiation and cryptographic provenance across all recipient accesses.
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Tamper-Evident Ledger</span>
+        </div>
+        <p class="card-desc">
+          Decryption events are committed to a local sequential hash-chained ledger with continuous cryptographic integrity recalculation.
+        </p>
+      </div>
+    </div>
+
+    <!-- The Problem & Solution Visual Architecture -->
+    <div class="card" style="margin-bottom: 2.5rem;">
+      <div class="card-title" style="margin-bottom: 1.25rem;">
+        <span>Multi-Recipient Distribution & Leak Attribution Architecture</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        <div style="background: #0b1120; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: #60a5fa; margin-bottom: 0.75rem;">1. Multi-Recipient Decryption</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Sender distributes the same confidential PDF to multiple authorized members. All members decrypt and receive <b>visually identical copies</b>:
+          </p>
+          <div class="mono" style="background: #070c18; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; line-height: 1.6; border: 1px solid #1e293b;">
+            Member 1 Decrypts → Session S001 → Watermark WM-A72X → Signed & Committed<br>
+            Member 1 Decrypts Again → Session S002 → Watermark WM-A91P → Different Provenance<br>
+            Member 2 Decrypts → Session S003 → Watermark WM-B42K → Distinct Provenance
+          </div>
+        </div>
+
+        <div style="background: #0b1120; padding: 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <h4 style="color: #34d399; margin-bottom: 0.75rem;">2. Leak Investigation & Verification</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            When a leaked document is discovered, TraceSeal deterministically attributes the exact recipient and session:
+          </p>
+          <div class="mono" style="background: #070c18; padding: 0.75rem; border-radius: 6px; font-size: 0.75rem; line-height: 1.6; border: 1px solid #1e293b;">
+            Leaked PDF Uploaded<br>
+            ↓ Extract Watermark (WM-A72X)<br>
+            ↓ Match Decryption Session (S001)<br>
+            ↓ Retrieve Attributed Member from Database<br>
+            ↓ Verify Digital Signature (NIST ML-DSA-44)<br>
+            ↓ Verify Ledger Hash-Chain Integrity<br>
+            ↓ <b>ATTRIBUTION VERIFIED</b> + Generate Evidentiary PDF Report
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>TRACESEAL — Smart India Hackathon Prototype (SIH26237) — Offline-First Cryptographic Provenance Architecture</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Docker build exclusions — keep image lean
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+scratch/
+tests/__pycache__/
+.git/
+.gitignore
+# Don't exclude: traceseal.db, storage/, ledger_data/ — these are bundled for first-deploy seed

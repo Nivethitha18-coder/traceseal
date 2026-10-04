@@ -1,0 +1,70 @@
+{
+  "name": "TRACESEAL — Cryptographic Document Leak Attribution",
+  "short_name": "TRACESEAL",
+  "description": "Offline-First Document Provenance & Forensic Leak Attribution System with Post-Quantum Cryptography and Immutable Hash-Chained Ledger.",
+  "start_url": "/login",
+  "scope": "/",
+  "id": "/traceseal-app",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0f1d",
+  "theme_color": "#06b6d4",
+  "categories": ["security", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sign In",
+      "short_name": "Login",
+      "description": "Role-separated cryptographic authentication portal",
+      "url": "/login",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Encrypted document management & leak monitoring",
+      "url": "/admin",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Investigator Console",
+      "short_name": "Investigate",
+      "description": "Forensic leak attribution & warning notices",
+      "url": "/investigator",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Authorised Personnel",
+      "short_name": "Recipient",
+      "description": "Authorized document decryption & warning notices",
+      "url": "/recipient",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ledger Explorer",
+      "short_name": "Ledger",
+      "description": "Tamper-evident audit chain verification",
+      "url": "/ledger-view",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
